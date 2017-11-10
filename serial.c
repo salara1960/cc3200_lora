@@ -9,7 +9,7 @@ const char *TAG_UART = "UART";
 const int BSIZE = 128;
 uint32_t wait_ack;//2000
 s_pctrl pctrl = {0, 0, 1, 1, 0};
-bool lora_start = false, ts_set = false;
+bool ts_set = false;
 static uint8_t allcmd = 0;
 static uint32_t pknum_tx = 0;
 static uint32_t pknum_rx = 0;
@@ -135,7 +135,6 @@ inline void get_tsensor(t_sens_t *t_s)
 //-----------------------------------------------------------------------------------------
 void serial_task(void *arg)
 {
-//lora_start = true;
 char stx[256];
 char *uks = NULL, *uke = NULL;
 
@@ -155,7 +154,7 @@ char *uks = NULL, *uke = NULL;
     	vTaskDelay(1000);
 
     	char cmds[BSIZE], tmp[32] = {0};
-    	uint32_t len = 0;//, dl = 0;
+    	uint32_t len = 0;
     	uint8_t lvl = 0;
     	bool needs = false;
     	TickType_t tms = 0, tmneeds = 0, wtt_start=0, wtt_stop=0, dur=0;
@@ -267,7 +266,6 @@ char *uks = NULL, *uke = NULL;
     			}
     		}
 
-    		//if (rxd.rdy) {
     		while (rxd.rd != rxd.wr) {
         		if (rxd.rd >= lora_buf_len) rxd.rd = 0;
         		data[len++] = rxd.buf[rxd.rd++];
@@ -331,7 +329,6 @@ printik(TAG_UART, stx, BROWN_COLOR);
 
     memset(stx, 0, 128); sprintf(stx, "Stop serial_task\r\n"); printik(TAG_UART, stx, CYAN_COLOR);
 
-//    lora_start = false;
     vTaskDelete(NULL);
 }
 

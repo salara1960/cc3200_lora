@@ -42,6 +42,7 @@ typedef struct
 #pragma pack(push,1)
 typedef struct
 {
+//    uint8_t rdy;
     uint8_t rd;
     uint8_t wr;
     char buf[lora_buf_len];
@@ -52,15 +53,11 @@ extern s_lora_buf rx_buf;
 
 extern unsigned int ucPort;
 extern unsigned char ucPin;
-
-
-
 extern OsiMsgQ_t evtq;
 extern uint32_t cli_id;
 extern s_lora_stat lora_stat;
-//extern void printik(const char *tag, const char *buf, const char *color);
 extern const char *TAG_UART;
-extern bool lora_start;
+
 extern void serial_init();
 extern void serial_task(void *arg);
 

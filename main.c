@@ -1,13 +1,7 @@
-//*****************************************************************************
-
 #include "func.h"
-
 #include "pinmux.h"
-
 #include "sl_mqtt_client.h"
-
 #include "serial.h"
-
 #include "netcfg.h"
 
 
@@ -31,24 +25,7 @@ void BoardInit(void);
     #endif
 #endif
 //****************************************************************************
-/*
-void LedTimerConfigNStart()
-{
-    // Configure Timer for blinking the LED for IP acquisition
-    Timer_IF_Init(PRCM_TIMERA0, TIMERA0_BASE, TIMER_CFG_PERIODIC, TIMER_A, 0);
-    Timer_IF_IntSetup(TIMERA0_BASE, TIMER_A, TimerPeriodicIntHandler);
-    Timer_IF_Start(TIMERA0_BASE, TIMER_A, 100);
-}
-*/
 //****************************************************************************
-/*
-void LedTimerDeinitStop()
-{
-    // Disable the LED blinking Timer as Device is connected to AP
-    Timer_IF_Stop(TIMERA0_BASE, TIMER_A);
-    Timer_IF_DeInit(TIMERA0_BASE, TIMER_A);
-}
-*/
 //*****************************************************************************
 void BoardInit(void)
 {
@@ -149,20 +126,8 @@ uint8_t mac_addr[mac_len];
     init_adc(ThePin);
 
 
-/*
-    osi_MsgQCreate(&g_PBQueue, "PBQueue", sizeof(event_msg), 5);
-    lRetVal = osi_TaskCreate(MqttClient, (const signed char *)"Mqtt Client", OSI_STACK_SIZE, NULL, (1), NULL);// Start the MQTT Client task
-    if (lRetVal < 0) {
-    	Message("Error start mqtt_client task !!!\r\n");
-        LOOP_FOREVER();
-    } else {
-    	Message("Start mqtt_client task OK\r\n");
-    }
-*/
-
     //****************    UART1 (LORA)    **************************
     osi_MsgQCreate(&evtq, "evtq", sizeof(s_evt), 5);//create a queue to handle uart event
-//    s_evt evt;
     serial_init();
     lRetVal = osi_TaskCreate(serial_task, (const signed char *)"LoRa", OSI_STACK_SIZE, NULL, (2), NULL);// Start the LoRa task
     if (lRetVal < 0) {
@@ -186,7 +151,7 @@ uint8_t mac_addr[mac_len];
 
     osi_start();// Start the task scheduler
 
-    while (1) { vTaskDelay(1000); };
+    while (1) { vTaskDelay(1000); }
 
 }
 
