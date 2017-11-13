@@ -28,7 +28,10 @@ uint8_t bt;
     	if ( (bt >= 0x0a) && (bt <= 0x7f) ) {
     		rxd.buf[rxd.wr++] = bt;
     		if (rxd.wr >= lora_buf_len) rxd.wr = 0;
-    		//if (rxd.rd == rxd.wr) rxd.rdy = 0; else rxd.rdy = 1;
+    		if (rxd.rd == rxd.wr) {
+    			rxd.rdy = 0;
+    			//rxd.rd = rxd.wr = 0;
+    		} else rxd.rdy = 1;
     	}
     }
 
@@ -128,7 +131,7 @@ bool lora_check_status()
 //-----------------------------------------------------------------------------------------
 inline void get_tsensor(t_sens_t *t_s)
 {
-    t_s->vcc = GetSampleADC(TheChan, true);//4095 * 0.8;//(uint32_t)(adc1_get_raw(ADC1_TEST_CHANNEL) * 0.8);
+    t_s->vcc = GetSampleADC(TheChan, false);//4095 * 0.8;//(uint32_t)(adc1_get_raw(ADC1_TEST_CHANNEL) * 0.8);
     t_s->faren = 78;//temprature_sens_read();// - 40;
     t_s->cels = (t_s->faren - 32) * 5/9;
 }
@@ -151,7 +154,7 @@ char *uks = NULL, *uke = NULL;
     		vTaskDelay(500);
     	}
     	lora_reset();
-    	vTaskDelay(1000);
+    	vTaskDelay(500);
 
     	char cmds[BSIZE], tmp[32] = {0};
     	uint32_t len = 0;
@@ -197,23 +200,24 @@ char *uks = NULL, *uke = NULL;
     			tms = get_tmr(at_cmd[allcmd].wait);
     			len = 0; memset(data, 0, BSIZE);
     			while (!check_tmr(tms)) {
-    				if (rxd.rd != rxd.wr) {
-    				    if (rxd.rd >= lora_buf_len) rxd.rd = 0;
-    				    data[len++] = rxd.buf[rxd.rd++];
-    				    if ( (strstr(data, "\r\n")) || (len >= BSIZE - 2) ) {
-    				    	if (strstr(data, "ERROR:")) {
-    				    		sprintf(stx,"%s%s%s", RED_COLOR, data, STOP_COLOR);
-    				    		pMessage(stx);
-    				    	} else {
+    				if ((rxd.rd != rxd.wr) && rxd.rdy) {
+    					if (rxd.rd >= lora_buf_len) rxd.rd = 0;
+    					data[len++] = rxd.buf[rxd.rd++];
+    					if ( (strstr(data, "\r\n")) || (len >= BSIZE - 2) ) {
+    						if (strstr(data, "ERROR:")) {
+    							sprintf(stx,"%s%s%s", RED_COLOR, data, STOP_COLOR);
+    							pMessage(stx);
+    						} else {
 #ifdef PRINT_AT
-    				    		sprintf(stx,"%s", data);
-    				    		pMessage(stx);
+    							sprintf(stx,"%s", data);
+    							pMessage(stx);
 #endif
-    				    		if (data[0] == '+') put_at_value(allcmd, data);
-    				    	}
-    				    	break;
-    				    }
+    							if (data[0] == '+') put_at_value(allcmd, data);
+    						}
+    						break;
+    					}
     				}
+
     			}
     			allcmd++;
     			vTaskDelay(25);//50//200
@@ -257,8 +261,8 @@ char *uks = NULL, *uke = NULL;
     				sprintf(cmds+strlen(cmds),"\r");
     				printik(TAG_UART, cmds, MAGENTA_COLOR);
     				evt.type = 0; evt.num = pknum_tx;
-    				if (xQueueSend(evtq, (void *)&evt, (TickType_t)10) != pdPASS) {
-    					UART_PRINT("[%s] Error while sending to evtq\r\n", TAG_UART);
+    				if (xQueueSend(evtq, (void *)&evt, 0) != pdPASS) {
+    					Report("[%s] Error while sending to evtq\r\n", TAG_UART);
     				}
 
     				needs = true;
@@ -266,13 +270,15 @@ char *uks = NULL, *uke = NULL;
     			}
     		}
 
-    		while (rxd.rd != rxd.wr) {
+    		while ((rxd.rd != rxd.wr) && rxd.rdy) {
         		if (rxd.rd >= lora_buf_len) rxd.rd = 0;
         		data[len++] = rxd.buf[rxd.rd++];
     			if ( (strchr(data, '\n')) || (len >= BSIZE - 2) ) {
     				wtt_stop = get_tmr(0);
     				if (!strchr(data,'\n')) sprintf(data,"\n");
-    				memset(stx,0,128); sprintf(stx,"Recv (%u) : %s", ++pknum_rx, data); printik(TAG_UART, stx, BROWN_COLOR);
+    				memset(stx,0,128);
+    				sprintf(stx,"Recv (%u) : %s", ++pknum_rx, data);
+    				printik(TAG_UART, stx, BROWN_COLOR);
     				//---------------
     				if (!ts_set) {
     					uks = strstr(data, "TS[");
@@ -287,7 +293,7 @@ char *uks = NULL, *uke = NULL;
     							dur = tt / 1000;
     							if ((tt % 1000) > 500) dur++;
     							stm += dur;
-    							SetDevTime(&stm);// !!!!!!!!!!!   SET DATE_TIME   !!!!!!!!!!!!!!!!!!!!
+//    							SetDevTime(&stm);// !!!!!!!!!!!   SET DATE_TIME   !!!!!!!!!!!!!!!!!!!!
     							uks = uke + 1;
     							uke = strchr(uks,']');
     							if (uke) {
@@ -295,12 +301,10 @@ char *uks = NULL, *uke = NULL;
     								//setenv("TZ", uks, 1);
     								//tzset();
     								ts_set = true;
-memset(stx,0,128);
-sprintf(stx,"Time %u+%u (%u-%u|%u) with zone %s\n",
-			(uint32_t)(stm-dur), (uint32_t)dur,
-			(uint32_t)wtt_start, (uint32_t)wtt_stop, (uint32_t)(tt % 1000),
-			uks);
-printik(TAG_UART, stx, BROWN_COLOR);
+    								sprintf(stx,"Time %u+%u (%u-%u|%u) with zone %s\n",
+    											(uint32_t)(stm-dur), (uint32_t)dur, (uint32_t)wtt_start,
+    											(uint32_t)wtt_stop, (uint32_t)(tt % 1000), uks);
+    								printik(TAG_UART, stx, BROWN_COLOR);
     							}
     						}
     					}
@@ -308,11 +312,12 @@ printik(TAG_UART, stx, BROWN_COLOR);
     				//---------------
     				len = 0; memset(data, 0, BSIZE);
     				evt.type = 1; evt.num = pknum_rx;
-    				if (xQueueSend(evtq, (void *)&evt, (TickType_t)0) != pdPASS) {
-    					UART_PRINT("[%s] Error while sending to evtq\r\n", TAG_UART);
+    				if (xQueueSend(evtq, (void *)&evt, 0) != pdPASS) {
+    					Report("[%s] Error while sending to evtq\r\n", TAG_UART);
     				}
     			}
-    		}
+    		}//while
+
 
     		lvl = gpio_get_level(U2_SW2);
     		if (lvl) tmneeds = get_tmr(10);

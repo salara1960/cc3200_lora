@@ -33,7 +33,7 @@ struct tm *ct = localtime(tim);
 
 }
 //--------------------------------------------------------------------
-void printik(const char *tag, const char *buf, const char *color)
+inline void printik(const char *tag, const char *buf, const char *color)
 {
 int len = 32;
 

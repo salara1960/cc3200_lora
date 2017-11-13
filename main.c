@@ -6,8 +6,12 @@
 
 
 #define mac_len 6
-#define TASK_PRIORITY           3
+#define TASK_PRIORITY           7
 #define OSI_STACK_SIZE          2048
+
+const char *TAG_LOOP = "LOOP";
+s_evt evt;
+
 
 //*****************************************************************************
 //*****************************************************************************
@@ -52,30 +56,53 @@ void BoardInit(void)
 //*****************************************************************************
 void loop_task(void *arg)
 {
-//const char *TAG_LOOP = "LOOP";
-s_evt evt;
-//char stk[128];
+char stx[128];
+uint8_t fl=0, i;
 
-	//GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+	GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+	GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+	vTaskDelay(1000);
+	GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
+	GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
 
-    while (true) {
-
+    while (1) {
     	if (xQueueReceive(evtq, &evt, 0) == pdTRUE) {
-    		/*
-    		memset(stk, 0, 128);
-    		if (!evt.type)
-    			sprintf(stk,"Send");
-    		else
-    			sprintf(stk,"Recv");
-    		sprintf(stk+strlen(stk)," pack #%u\r\n", evt.num);
-    		pMessage(stk);
-    		//printik(TAG_LOOP, stk, WHITE_COLOR);
-    		 */
+    		//memset(stx, 0, 128);
+    		sprintf(stx,"[%s] ", TAG_LOOP);
+    		if (!evt.type) {
+    			fl=1;
+    			sprintf(stx,"Send");
+    		} else {
+    			fl=2;
+    			sprintf(stx,"Recv");
+    		}
+    		sprintf(stx+strlen(stx)," pack #%u\r\n", evt.num);
+    		pMessage(stx);
+    		//printik(TAG_LOOP, stx, CYAN_COLOR);
     	}
-    	//vTaskDelay(50);
-
+    	switch (fl) {
+    		case 1:
+    			for (i=0; i<8; i++) {
+    			    GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+    			    vTaskDelay(100);
+    			    GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+    			    vTaskDelay(100);
+    			    GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+    			}
+    			fl=0;
+    		break;
+    		case 2:
+    			for (i=0; i<8; i++) {
+    				GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
+    				vTaskDelay(100);
+    				GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+    				vTaskDelay(100);
+    				GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
+    			}
+    			fl=0;
+    		break;
+    	}
     }
-
 
 }
 //*****************************************************************************
@@ -106,7 +133,7 @@ uint8_t mac_addr[mac_len];
         LOOP_FOREVER();
     } else {
     	Message("Starting wifi task Ok\r\n");
-    	GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+    	//GPIO_IF_LedOn(MCU_RED_LED_GPIO);
     }
 
 
@@ -125,33 +152,39 @@ uint8_t mac_addr[mac_len];
 
     init_adc(ThePin);
 
+    //**************************************************************
+    lRetVal = osi_TaskCreate(loop_task, (const signed char *)"Loop", OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);// Start the MQTT Client task
+    if (lRetVal < 0) {
+    	Message("Error start loop task !!!\r\n");
+        LOOP_FOREVER();
+    } else {
+        Message("Start loop task OK\r\n");
+        //GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+    }
+    //**************************************************************
+
+
 
     //****************    UART1 (LORA)    **************************
     osi_MsgQCreate(&evtq, "evtq", sizeof(s_evt), 5);//create a queue to handle uart event
     serial_init();
-    lRetVal = osi_TaskCreate(serial_task, (const signed char *)"LoRa", OSI_STACK_SIZE, NULL, (2), NULL);// Start the LoRa task
+    lRetVal = osi_TaskCreate(serial_task, (const signed char *)"LoRa", OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);// Start the LoRa task
     if (lRetVal < 0) {
     	Message("Error start serial task !!!\r\n");
         LOOP_FOREVER();
     } else {
     	Message("Start serial task OK\r\n");
-    	GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+    	//GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
     }
     //**************************************************************
 
 
-    lRetVal = osi_TaskCreate(loop_task, (const signed char *)"Loop", OSI_STACK_SIZE, NULL, (2), NULL);// Start the MQTT Client task
-    if (lRetVal < 0) {
-    	Message("Error start loop task !!!\r\n");
-        LOOP_FOREVER();
-    } else {
-    	Message("Start loop task OK\r\n");
-    	GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
-    }
-
     osi_start();// Start the task scheduler
 
-    while (1) { vTaskDelay(1000); }
+    LOOP_FOREVER();
+
+//    while (1) { vTaskDelay(100); }
+
 
 }
 

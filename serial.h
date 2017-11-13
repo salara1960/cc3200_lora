@@ -42,7 +42,7 @@ typedef struct
 #pragma pack(push,1)
 typedef struct
 {
-//    uint8_t rdy;
+    uint8_t rdy;
     uint8_t rd;
     uint8_t wr;
     char buf[lora_buf_len];
