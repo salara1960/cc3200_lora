@@ -58,27 +58,44 @@ void loop_task(void *arg)
 {
 char stx[128];
 uint8_t fl=0, i;
+#ifdef DISPLAY
+uint8_t col = 0, row = 0, cnt = 0xff;
 
-	GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
-	GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
-	vTaskDelay(1000);
-	GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
-	GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+    ssd1306_on(true); //display on
+    ssd1306_contrast(cnt);
+    ssd1306_clear();
+
+#endif
+
+    GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+    GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+    vTaskDelay(1000);
+    GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
+    GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
 
     while (1) {
     	if (xQueueReceive(evtq, &evt, 0) == pdTRUE) {
-    		//memset(stx, 0, 128);
     		sprintf(stx,"[%s] ", TAG_LOOP);
     		if (!evt.type) {
     			fl=1;
     			sprintf(stx,"Send");
+#ifdef DISPLAY
+    			row = 7;
+#endif
     		} else {
     			fl=2;
     			sprintf(stx,"Recv");
+#ifdef DISPLAY
+    			row = 8;
+#endif
     		}
-    		sprintf(stx+strlen(stx)," pack #%u\r\n", evt.num);
+    		sprintf(stx+strlen(stx)," pack #%u", evt.num);
+#ifdef DISPLAY
+    		col = calcx(strlen(stx));
+		ssd1306_text_xy(stx, col, row);
+#endif
+    		sprintf(stx+strlen(stx),"\r\n");
     		pMessage(stx);
-    		//printik(TAG_LOOP, stx, CYAN_COLOR);
     	}
     	switch (fl) {
     		case 1:
@@ -151,6 +168,19 @@ uint8_t mac_addr[mac_len];
 
 
     init_adc(ThePin);
+
+#ifdef DISPLAY
+    //*********************    SSD1306    **************************
+    i2c_ssd1306_init();
+    //vTaskDelay(500);
+
+    ssd1306_on(false);
+    //vTaskDelay(500);
+
+    //ssd1306_init();
+    ssd1306_pattern();
+    //**************************************************************
+#endif
 
     //**************************************************************
     lRetVal = osi_TaskCreate(loop_task, (const signed char *)"Loop", OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);// Start the MQTT Client task

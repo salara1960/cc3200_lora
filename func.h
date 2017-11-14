@@ -31,8 +31,8 @@
 // common interface includes
 #include "network_if.h"
 #include "uart_if.h"
+#include "i2c_if.h"
 
-//#include "button_if.h"
 #include "gpio_if.h"
 #include "timer_if.h"
 #include "common.h"
@@ -41,10 +41,13 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-//#include "portable.h"
 
-#undef NOTERM
 
+#include "hdr.h"
+
+#ifdef DISPLAY
+	#include "ssd1306.h"
+#endif
 
 #define UART_BAUD_RATE  115200
 #define SYSCLK          80000000
@@ -87,6 +90,11 @@ typedef struct {
     uint32_t vcc;
 } t_sens_t;
 #pragma pack(pop)
+
+
+//typedef unsigned char uint8_t;
+
+
 
 //--------------------------------------------------------------------
 extern uint32_t cli_id;

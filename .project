@@ -37,6 +37,11 @@
 			<locationURI>CC3200_SDK_ROOT/example/common/gpio_if.c</locationURI>
 		</link>
 		<link>
+			<name>i2c_if.c</name>
+			<type>1</type>
+			<locationURI>PARENT-7-PROJECT_LOC/home/alarm/ti/cc3200-sdk/example/common/i2c_if.c</locationURI>
+		</link>
+		<link>
 			<name>network_if.c</name>
 			<type>1</type>
 			<locationURI>PARENT-7-PROJECT_LOC/home/alarm/ti/cc3200-sdk/example/common/network_if.c</locationURI>

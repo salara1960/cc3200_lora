@@ -5,6 +5,8 @@
 
 #include "pinmux.h"
 
+#include "hdr.h"
+
 //*****************************************************************************
 void PinMuxConfig(void)
 {
@@ -18,18 +20,26 @@ void PinMuxConfig(void)
     MAP_PRCMPeripheralClkEnable(PRCM_UARTA0, PRCM_RUN_MODE_CLK);
     MAP_PRCMPeripheralClkEnable(PRCM_UARTA1, PRCM_RUN_MODE_CLK);
 
+#ifdef DISPLAY
+    MAP_PRCMPeripheralClkEnable(PRCM_I2CA0, PRCM_RUN_MODE_CLK);
+    // Configure PIN_01 (GPIO10) for I2C0 I2C_SCL
+    MAP_PinTypeI2C(PIN_01, PIN_MODE_1);
+    // Configure PIN_02 (GPIO11) for I2C0 I2C_SDA
+    MAP_PinTypeI2C(PIN_02, PIN_MODE_1);
+#endif
+
 
     // Configure PIN_64 for GPIOOutput (GPIO9 RED)
     MAP_PinTypeGPIO(PIN_64, PIN_MODE_0, false);
     MAP_GPIODirModeSet(GPIOA1_BASE, 0x2, GPIO_DIR_MODE_OUT);
 
-    // Configure PIN_01 for GPIOOutput (GPIO10 ORANGE)
-    MAP_PinTypeGPIO(PIN_01, PIN_MODE_0, false);
-    MAP_GPIODirModeSet(GPIOA1_BASE, 0x4, GPIO_DIR_MODE_OUT);
+    // Configure PIN_61 for GPIOOutput (GPI6 ORANGE) // PIN_61 - GPIO6
+    MAP_PinTypeGPIO(PIN_61, PIN_MODE_0, false);
+    MAP_GPIODirModeSet(GPIOA0_BASE, 0x40, GPIO_DIR_MODE_OUT);//PIN_01 GPIO10 0x4
 
-    // Configure PIN_02 for GPIOOutput (GPIO11 GREEN)
-    MAP_PinTypeGPIO(PIN_02, PIN_MODE_0, false);
-    MAP_GPIODirModeSet(GPIOA1_BASE, 0x8, GPIO_DIR_MODE_OUT);
+    // Configure PIN_62 for GPIOOutput (GPIO7 GREEN) // PIN_62 - GPIO7
+    MAP_PinTypeGPIO(PIN_62, PIN_MODE_0, false);
+    MAP_GPIODirModeSet(GPIOA0_BASE, 0x80, GPIO_DIR_MODE_OUT);//PIN_02 GPIO11 0x8
 
     // Configure PIN_04 for GPIOInput (GPIO13 SW3)
     MAP_PinTypeGPIO(PIN_04, PIN_MODE_0, false);
