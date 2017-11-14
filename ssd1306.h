@@ -54,14 +54,14 @@
 #define OLED_CMD_SET_CHARGE_PUMP        0x8D    // follow with 0x14
 
 extern int ssd1306_on(bool flag);
-extern void i2c_ssd1306_init();
+extern int i2c_ssd1306_init();
 extern int ssd1306_init();
 extern void ssd1306_invert();
 extern void ssd1306_clear();
 extern void ssd1306_pattern();
 extern void ssd1306_contrast(uint8_t value);
-extern void ssd1306_shift(bool left);//, uint8_t line);
-extern void ssd1306_scroll(bool flag);
+//extern void ssd1306_shift(bool left);
+//extern void ssd1306_scroll(bool flag);
 extern void ssd1306_text_xy(char *stroka, uint8_t cx, uint8_t cy);
 extern void ssd1306_text(char *stroka);
 extern uint8_t calcx(int len);

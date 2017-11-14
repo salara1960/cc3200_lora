@@ -100,6 +100,7 @@ typedef struct {
 extern uint32_t cli_id;
 extern OsiMsgQ_t evtq;
 extern uint32_t ThePin, TheChan;
+extern int i2c_err;
 //--------------------------------------------------------------------
 extern void pMessage(const char *st);
 extern void SetDevTime(time_t *tim);

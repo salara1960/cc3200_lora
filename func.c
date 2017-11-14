@@ -4,6 +4,7 @@ uint32_t cli_id = 0;
 OsiMsgQ_t evtq = NULL;
 uint32_t ThePin = PIN_58;
 uint32_t TheChan = ADC_CH_1;
+int i2c_err=0;
 
 //--------------------------------------------------------------------
 void pMessage(const char *st)

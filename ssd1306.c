@@ -145,11 +145,9 @@ uint8_t font8x8[128][8] = {
 //int I2C_IF_ReadFrom(unsigned char ucDevAddr,unsigned char *pucWrDataBuf,unsigned char ucWrLen,unsigned char *pucRdDataBuf,unsigned char ucRdLen)
 
 //-----------------------------------------------------------------------------------------
-void i2c_ssd1306_init()
+int i2c_ssd1306_init()
 {
-
-    I2C_IF_Open(I2C_MASTER_MODE_FST);
-
+    return I2C_IF_Open(I2C_MASTER_MODE_FST);
 }
 //-----------------------------------------------------------------------------------------
 int ssd1306_on(bool flag)
@@ -159,7 +157,7 @@ uint8_t dat[2] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
 
     if (flag) dat[1] = OLED_CMD_DISPLAY_ON; else dat[1] = OLED_CMD_DISPLAY_OFF;
 
-    ret = I2C_IF_Write(	(OLED_I2C_ADDRESS << 1), &dat[0], 2, 1);
+    ret = I2C_IF_Write(	(OLED_I2C_ADDRESS << 1), dat, 2, true);
 
     if (ret) {
     	char stx[128];
@@ -171,29 +169,35 @@ uint8_t dat[2] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
     	printik(TAG_OLED, stx, RED_COLOR);
     }
 
+    i2c_err = ret;
+
     return ret;
 }
 //-----------------------------------------------------------------------------------------
 int ssd1306_init()
 {
-uint8_t dat[16];
-int ret;
+uint8_t len=13;
+int ret=0;
 
-    dat[0] = OLED_CONTROL_BYTE_CMD_STREAM;
-    dat[1] = OLED_CMD_SET_CHARGE_PUMP;
-    dat[2] = 0x14;
-    dat[3] = OLED_CMD_SET_SEGMENT_REMAP;
-    dat[4] = OLED_CMD_SET_COM_SCAN_MODE;
-    dat[5] = OLED_CMD_SET_COLUMN_RANGE;
-    dat[6] = 0;
-    dat[7] = 0x7f;
-    dat[8] = OLED_CMD_SET_PAGE_RANGE;
-    dat[9] = 0;
-    dat[10] = 7;
-    dat[11] = OLED_CMD_DISPLAY_ON;
-    dat[12] = invert;//OLED_CMD_DISPLAY_INVERTED       0xA7
+uint8_t dat[13] =
+{
+OLED_CONTROL_BYTE_CMD_STREAM,
+OLED_CMD_SET_CHARGE_PUMP,
+0x14,
+OLED_CMD_SET_SEGMENT_REMAP,
+OLED_CMD_SET_COM_SCAN_MODE,
+OLED_CMD_SET_COLUMN_RANGE,
+0x0,
+0x7f,
+OLED_CMD_SET_PAGE_RANGE,
+0x0,
+0x7,
+OLED_CMD_DISPLAY_ON,
+invert};//OLED_CMD_DISPLAY_INVERTED       0xA7
 
-    ret = I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 13, true);
+unsigned char *uk = &dat[0];
+
+    ret = I2C_IF_Write((OLED_I2C_ADDRESS << 1), uk, len, true);
 
     if (ret) {
     	char stx[128];
@@ -201,97 +205,110 @@ int ret;
     	printik(TAG_OLED, stx, RED_COLOR);
     }
 
+    i2c_err = ret;
+
     return ret;
 }
 //-----------------------------------------------------------------------------------------
 void ssd1306_invert()
 {
 uint8_t dat[2] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
-int ret;
+int ret=0;
 
 
-    if (invert == OLED_CMD_DISPLAY_INVERTED) invert = OLED_CMD_DISPLAY_NORMAL;
-					else invert = OLED_CMD_DISPLAY_INVERTED;
+    if (invert == OLED_CMD_DISPLAY_INVERTED)
+    	invert = OLED_CMD_DISPLAY_NORMAL;
+	else
+		invert = OLED_CMD_DISPLAY_INVERTED;
     dat[1] = invert;
 
     ret = I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 2, true);
 
     if (ret) {
-	char stx[128];
-	sprintf(stx, "[%s] Display invert failed. code: 0x%.2X\n", __func__, ret);
-	printik(TAG_OLED, stx, RED_COLOR);
+    	char stx[128];
+    	sprintf(stx, "[%s] Display invert failed. code: 0x%.2X\n", __func__, ret);
+    	printik(TAG_OLED, stx, RED_COLOR);
     }
+
+    i2c_err = ret;
 
 }
 //-----------------------------------------------------------------------------------------
 void ssd1306_clear()
 {
 uint8_t dat[2] = {0}, zero[129] = {0}, i;
+int rt=0;
 
     zero[0] = OLED_CONTROL_BYTE_DATA_STREAM;
     dat[0] = OLED_CONTROL_BYTE_CMD_SINGLE;
     for (i = 0; i < 8; i++) {
-	dat[1] = 0xB0 | i;
-	I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 2, true);
-
-	I2C_IF_Write((OLED_I2C_ADDRESS << 1), zero, 129, true);
+    	dat[1] = 0xB0 | i;
+    	rt = I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 2, true);
+    	rt = I2C_IF_Write((OLED_I2C_ADDRESS << 1), zero, 129, true);
     }
 
+    i2c_err = rt;
 }
 //-----------------------------------------------------------------------------------------
 void ssd1306_pattern()
 {
-uint8_t i, j, dat[2] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
+uint8_t i, dat[2] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
 uint8_t buf[129] = {0};
+int rt=0;
 
     buf[0] = OLED_CONTROL_BYTE_DATA_STREAM;
+    for (i = 1; i < 129; i++) buf[i] = 0xFF >> (i % 8);
     for (i = 0; i < 8; i++) {
-	dat[1] = 0xB0 | i;
-	I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 2, true);
-
-	for (j = 1; j < 129; j++) buf[j] = 0xFF >> (j % 8);
-	I2C_IF_Write((OLED_I2C_ADDRESS << 1), buf, 129, true);
+    	dat[1] = 0xB0 | i;
+    	rt = I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 2, true);
+    	rt = I2C_IF_Write((OLED_I2C_ADDRESS << 1), buf, 129, true);
     }
+
+    i2c_err = rt;
 }
 //-----------------------------------------------------------------------------------------
 void ssd1306_contrast(uint8_t value)//0xff or 0x00
 {
-unsigned char dat[3] = {OLED_CONTROL_BYTE_CMD_STREAM, OLED_CMD_SET_CONTRAST, value};
+uint8_t dat[3] = {OLED_CONTROL_BYTE_CMD_STREAM, OLED_CMD_SET_CONTRAST, value};
+int rt=0;
 
-//    dat[2] = value;
-    I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 3, true);
-
+    rt = I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 3, true);
+    i2c_err = rt;
 }
 //-----------------------------------------------------------------------------------------
-void ssd1306_shift(bool left)//, uint8_t line)
+/*
+void ssd1306_shift(bool left)
 {
-uint8_t dir = 0x26;
+uint8_t byte;
 
-    if (left) dir++;// = 0x27; else dir = 0x26;
-    uint8_t dat[8] =
-    {
+    if (left) byte = 0x27; else byte = 0x26;
+
+uint8_t dat[8] =
+{
 	OLED_CONTROL_BYTE_CMD_STREAM,
 	0x2e,
-	dir,
-	0,
-	0,
-	7,
+	byte,
+	0x0,
+	0x0,
+	0x7,
 	0x3f,
 	0x2f
-    };
+};
 
     I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 8, true);
 
 }
+*/
 //-----------------------------------------------------------------------------------------
+/*
 void ssd1306_scroll(bool flag)
 {
 uint8_t byte = 0x3e;// deactivate scroll (p29)
 
     if (flag) byte++;// activate scroll (p29)
 
-    uint8_t dat[11] =
-    {
+uint8_t dat[11] =
+{
 	OLED_CONTROL_BYTE_CMD_STREAM,
 	0x27,//0x29// vertical and horizontal scroll (p29)
 	0,
@@ -303,14 +320,17 @@ uint8_t byte = 0x3e;// deactivate scroll (p29)
 	0x20,
 	0x40,
 	byte
-    };
+};
 
     I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 11, true);
 
 }
+*/
 //-----------------------------------------------------------------------------------------
 void ssd1306_text_xy(char *stroka, uint8_t cx, uint8_t cy)
 {
+int rt=0;
+
 uint8_t i, bt = OLED_CONTROL_BYTE_DATA_STREAM, lin = cy - 1, col = cx - 1, len = strlen(stroka);
 uint8_t first[7] =
 {
@@ -324,18 +344,21 @@ uint8_t first[7] =
 };
 uint8_t dat[4] = {OLED_CONTROL_BYTE_CMD_STREAM, 0, 0x10, 0};
 
-    I2C_IF_Write((OLED_I2C_ADDRESS << 1), first, 7, true);
+    rt = I2C_IF_Write((OLED_I2C_ADDRESS << 1), first, 7, true);
+    i2c_err = rt;
+    if (rt) return;
 
     for (i = 0; i < len; i++) {
-	if (stroka[i] == '\n') {
-	    dat[3] = 0xB0 | ++lin;
-	    I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 4, true);
-	} else {
-	    I2C_IF_Write((OLED_I2C_ADDRESS << 1), &bt, 1, true);
-	    I2C_IF_Write((OLED_I2C_ADDRESS << 1), &font8x8[(uint8_t)stroka[i]][0], 8, true);
-	}
+    	if (stroka[i] == '\n') {
+    		dat[3] = 0xB0 | ++lin;
+    		rt = I2C_IF_Write((OLED_I2C_ADDRESS << 1), dat, 4, true);
+    	} else {
+    		rt = I2C_IF_Write((OLED_I2C_ADDRESS << 1), &bt, 1, true);
+    		rt = I2C_IF_Write((OLED_I2C_ADDRESS << 1), &font8x8[(uint8_t)stroka[i]][0], 8, true);
+    	}
 
     }
+    i2c_err = rt;
 
 }
 //-----------------------------------------------------------------------------------------
@@ -355,5 +378,4 @@ uint8_t ret = 0;
 //******************************************************************************************
 
 #endif
-
 

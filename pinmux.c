@@ -35,11 +35,11 @@ void PinMuxConfig(void)
 
     // Configure PIN_61 for GPIOOutput (GPI6 ORANGE) // PIN_61 - GPIO6
     MAP_PinTypeGPIO(PIN_61, PIN_MODE_0, false);
-    MAP_GPIODirModeSet(GPIOA0_BASE, 0x40, GPIO_DIR_MODE_OUT);//PIN_01 GPIO10 0x4
+    MAP_GPIODirModeSet(GPIOA0_BASE, 0x40, GPIO_DIR_MODE_OUT);//old PIN_01 GPIO10 0x4
 
     // Configure PIN_62 for GPIOOutput (GPIO7 GREEN) // PIN_62 - GPIO7
     MAP_PinTypeGPIO(PIN_62, PIN_MODE_0, false);
-    MAP_GPIODirModeSet(GPIOA0_BASE, 0x80, GPIO_DIR_MODE_OUT);//PIN_02 GPIO11 0x8
+    MAP_GPIODirModeSet(GPIOA0_BASE, 0x80, GPIO_DIR_MODE_OUT);//old PIN_02 GPIO11 0x8
 
     // Configure PIN_04 for GPIOInput (GPIO13 SW3)
     MAP_PinTypeGPIO(PIN_04, PIN_MODE_0, false);

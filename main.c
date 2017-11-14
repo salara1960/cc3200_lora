@@ -61,9 +61,12 @@ uint8_t fl=0, i;
 #ifdef DISPLAY
 uint8_t col = 0, row = 0, cnt = 0xff;
 
-    ssd1306_on(true); //display on
-    ssd1306_contrast(cnt);
-    ssd1306_clear();
+    if (!i2c_err) ssd1306_on(true); //display on
+    vTaskDelay(10);
+    if (!i2c_err) ssd1306_contrast(cnt);
+    vTaskDelay(10);
+    if (!i2c_err) ssd1306_clear();
+    vTaskDelay(10);
 
 #endif
 
@@ -92,7 +95,7 @@ uint8_t col = 0, row = 0, cnt = 0xff;
     		sprintf(stx+strlen(stx)," pack #%u", evt.num);
 #ifdef DISPLAY
     		col = calcx(strlen(stx));
-		ssd1306_text_xy(stx, col, row);
+    		if (!i2c_err) ssd1306_text_xy(stx, col, row);
 #endif
     		sprintf(stx+strlen(stx),"\r\n");
     		pMessage(stx);
@@ -166,19 +169,25 @@ uint8_t mac_addr[mac_len];
     sprintf(stx,"Mac address %s DevID=%08X\r\n", stk, cli_id);
     Message(stx);
 
-
     init_adc(ThePin);
 
 #ifdef DISPLAY
     //*********************    SSD1306    **************************
-    i2c_ssd1306_init();
-    //vTaskDelay(500);
 
-    ssd1306_on(false);
-    //vTaskDelay(500);
-
-    //ssd1306_init();
-    ssd1306_pattern();
+    i2c_err = i2c_ssd1306_init();
+    if (i2c_err) Report("I2C port open failure\r\n");
+    else {
+    	//vTaskDelay(10);
+    	ssd1306_on(false);
+    	if (!i2c_err) {
+    		//vTaskDelay(10);
+    		ssd1306_init();
+    		if (!i2c_err) {
+    			//vTaskDelay(10);
+    	    	ssd1306_pattern();
+    		}
+    	}
+    }
     //**************************************************************
 #endif
 
