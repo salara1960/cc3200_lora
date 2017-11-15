@@ -1,13 +1,14 @@
 #include "func.h"
 #include "pinmux.h"
-#include "sl_mqtt_client.h"
+//#include "sl_mqtt_client.h"
 #include "serial.h"
 #include "netcfg.h"
 
 
 #define mac_len 6
-#define TASK_PRIORITY           7
-#define OSI_STACK_SIZE          2048
+#define TASK_PRIORITY           5
+#define MAX_OSI_STACK_SIZE          4096
+#define MIN_OSI_STACK_SIZE          2048
 
 const char *TAG_LOOP = "LOOP";
 s_evt evt;
@@ -62,7 +63,8 @@ char stx[128];
 	char *uk=NULL;
 
     ssd1306_contrast(0xff);
-    vTaskDelay(10);
+    //vTaskDelay(10);
+    osi_Sleep(10);
     ssd1306_clear();
 #endif
 
@@ -70,23 +72,25 @@ char stx[128];
 
     while (1) {
     	if (xQueueReceive(evtq, &evt, 10) == pdTRUE) {
-    		GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+    		memset(stx,0,128);
     		sprintf(stx,"[%s] ", TAG_LOOP);
 #ifdef DISPLAY
     		uk = stx + strlen(stx);
 #endif
     		if (!evt.type) {
+    			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
     			sprintf(stx+strlen(stx),"Send");
 #ifdef DISPLAY
-    			row = 2;
+    			row = 3;
 #endif
     		} else {
+    			GPIO_IF_LedOff(MCU_RED_LED_GPIO);
     			sprintf(stx+strlen(stx),"Recv");
 #ifdef DISPLAY
-    			row = 7;
+    			row = 6;
 #endif
     		}
-    		sprintf(stx+strlen(stx)," pack #%u", evt.num);
+    		sprintf(stx+strlen(stx)," msg #%u", evt.num);
 #ifdef DISPLAY
     		if (!i2c_err) {
     			col = calcx(strlen(uk));
@@ -95,7 +99,7 @@ char stx[128];
 #endif
     		sprintf(stx+strlen(stx),"\r\n");
     		pMessage(stx);
-    		GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+    		//printik(TAG_LOOP, stx, CYAN_COLOR);
     	}
     }//while(1)
 
@@ -121,6 +125,7 @@ uint8_t mac_addr[mac_len];
     GPIO_IF_LedOff(MCU_RED_LED_GPIO);
     GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
     GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+
 
     lRetVal = VStartSimpleLinkSpawnTask(SPAWN_TASK_PRIORITY);// Start the SimpleLink Host
     if (lRetVal < 0) {
@@ -167,13 +172,13 @@ uint8_t mac_addr[mac_len];
 #endif
 
     //**************************************************************
-    lRetVal = osi_TaskCreate(loop_task, (const signed char *)"Loop", OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);// Start the MQTT Client task
+    lRetVal = osi_TaskCreate(loop_task, (const signed char *)"Loop", MIN_OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);// Start the MQTT Client task
     if (lRetVal < 0) {
     	Message("Error start loop task !!!\r\n");
         LOOP_FOREVER();
     } else {
         Message("Start loop task OK\r\n");
-        GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+        //GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
     }
     //**************************************************************
 
@@ -182,13 +187,13 @@ uint8_t mac_addr[mac_len];
     //****************    UART1 (LORA)    **************************
     osi_MsgQCreate(&evtq, "evtq", sizeof(s_evt), 5);//create a queue to handle uart event
     serial_init();
-    lRetVal = osi_TaskCreate(serial_task, (const signed char *)"LoRa", OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);// Start the LoRa task
+    lRetVal = osi_TaskCreate(serial_task, (const signed char *)"LoRa", MAX_OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);// Start the LoRa task
     if (lRetVal < 0) {
     	Message("Error start serial task !!!\r\n");
         LOOP_FOREVER();
     } else {
     	Message("Start serial task OK\r\n");
-    	GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+    	//GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
     }
     //**************************************************************
 

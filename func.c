@@ -36,17 +36,12 @@ struct tm *ct = localtime(tim);
 //--------------------------------------------------------------------
 inline void printik(const char *tag, const char *buf, const char *color)
 {
-int len = 32;
 
-	if (tag) len += strlen(tag);
-	if (buf) len += strlen(buf);
-	if (color) len += strlen(color);
-	if (len > 32) {
-		char *st = (char *)calloc(1, len);
-		if (st) {
-			time_t ct = time(NULL);
-			struct tm *ctimka = localtime(&ct);
-			sprintf(st,"%02d:%02d:%02d | %s[%s] : %s%s",
+	char *st = (char *)calloc(1, strlen(tag) + strlen(buf) + strlen(color) + 32);
+	if (st) {
+		time_t ct = time(NULL);
+		struct tm *ctimka = localtime(&ct);
+		sprintf(st,"%02d:%02d:%02d | %s[%s] : %s%s",
 					//ctimka->tm_mday, ctimka->tm_mon+1, (ctimka->tm_year+1900) - 2000,
 					ctimka->tm_hour,
 					ctimka->tm_min,
@@ -55,9 +50,8 @@ int len = 32;
 					tag,
 					buf,
 					STOP_COLOR);
-			pMessage(st);
-			free(st);
-		}
+		pMessage(st);
+		free(st);
 	}
 
 }

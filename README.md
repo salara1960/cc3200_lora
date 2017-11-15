@@ -1,6 +1,6 @@
 # cc3200_lora
 
-cc3200 + lora module (HM-TRLR-S-868)
+cc3200 + lora module (HM-TRLR-S-868) + i2c display ssd1306
 
 aka esp_lora project
 
