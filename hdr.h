@@ -2,6 +2,6 @@
 #define __HDR_H__
 
     #undef NOTERM
-    #undef DISPLAY
+    #define DISPLAY
 
 #endif

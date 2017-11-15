@@ -57,72 +57,47 @@ void BoardInit(void)
 void loop_task(void *arg)
 {
 char stx[128];
-uint8_t fl=0, i;
 #ifdef DISPLAY
-uint8_t col = 0, row = 0, cnt = 0xff;
+	uint8_t col = 0, row = 0;
+	char *uk=NULL;
 
-    if (!i2c_err) ssd1306_on(true); //display on
+    ssd1306_contrast(0xff);
     vTaskDelay(10);
-    if (!i2c_err) ssd1306_contrast(cnt);
-    vTaskDelay(10);
-    if (!i2c_err) ssd1306_clear();
-    vTaskDelay(10);
-
+    ssd1306_clear();
 #endif
 
-    GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
-    GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
-    vTaskDelay(1000);
-    GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
-    GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+
 
     while (1) {
-    	if (xQueueReceive(evtq, &evt, 0) == pdTRUE) {
+    	if (xQueueReceive(evtq, &evt, 10) == pdTRUE) {
+    		GPIO_IF_LedOn(MCU_RED_LED_GPIO);
     		sprintf(stx,"[%s] ", TAG_LOOP);
-    		if (!evt.type) {
-    			fl=1;
-    			sprintf(stx,"Send");
 #ifdef DISPLAY
-    			row = 7;
+    		uk = stx + strlen(stx);
+#endif
+    		if (!evt.type) {
+    			sprintf(stx+strlen(stx),"Send");
+#ifdef DISPLAY
+    			row = 2;
 #endif
     		} else {
-    			fl=2;
-    			sprintf(stx,"Recv");
+    			sprintf(stx+strlen(stx),"Recv");
 #ifdef DISPLAY
-    			row = 8;
+    			row = 7;
 #endif
     		}
     		sprintf(stx+strlen(stx)," pack #%u", evt.num);
 #ifdef DISPLAY
-    		col = calcx(strlen(stx));
-    		if (!i2c_err) ssd1306_text_xy(stx, col, row);
+    		if (!i2c_err) {
+    			col = calcx(strlen(uk));
+    			ssd1306_text_xy(uk, col, row);
+    		}
 #endif
     		sprintf(stx+strlen(stx),"\r\n");
     		pMessage(stx);
+    		GPIO_IF_LedOff(MCU_RED_LED_GPIO);
     	}
-    	switch (fl) {
-    		case 1:
-    			for (i=0; i<8; i++) {
-    			    GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
-    			    vTaskDelay(100);
-    			    GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
-    			    vTaskDelay(100);
-    			    GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
-    			}
-    			fl=0;
-    		break;
-    		case 2:
-    			for (i=0; i<8; i++) {
-    				GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
-    				vTaskDelay(100);
-    				GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
-    				vTaskDelay(100);
-    				GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
-    			}
-    			fl=0;
-    		break;
-    	}
-    }
+    }//while(1)
 
 }
 //*****************************************************************************
@@ -178,15 +153,15 @@ uint8_t mac_addr[mac_len];
     if (i2c_err) Report("I2C port open failure\r\n");
     else {
     	//vTaskDelay(10);
-    	ssd1306_on(false);
-    	if (!i2c_err) {
+    	//ssd1306_on(false);
+    	//if (!i2c_err) {
     		//vTaskDelay(10);
     		ssd1306_init();
-    		if (!i2c_err) {
+    		//if (!i2c_err) {
     			//vTaskDelay(10);
     	    	ssd1306_pattern();
-    		}
-    	}
+    		//}
+    	//}
     }
     //**************************************************************
 #endif
@@ -198,7 +173,7 @@ uint8_t mac_addr[mac_len];
         LOOP_FOREVER();
     } else {
         Message("Start loop task OK\r\n");
-        //GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+        GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
     }
     //**************************************************************
 
@@ -213,7 +188,7 @@ uint8_t mac_addr[mac_len];
         LOOP_FOREVER();
     } else {
     	Message("Start serial task OK\r\n");
-    	//GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+    	GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
     }
     //**************************************************************
 
