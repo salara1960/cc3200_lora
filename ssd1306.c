@@ -1,5 +1,6 @@
 
 #include "func.h"
+#include "gpio_if.h"
 
 #ifdef DISPLAY
 
@@ -157,9 +158,10 @@ uint8_t dat[] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
 
     if (flag) dat[1] = OLED_CMD_DISPLAY_ON; else dat[1] = OLED_CMD_DISPLAY_OFF;
 
-    ret = I2C_IF_Write(OLED_I2C_ADDRESS, dat, 2, true);
+    ret = I2C_IF_Write(OLED_I2C_ADDRESS, dat, sizeof(dat), true);
 
     if (ret) {
+    	GPIO_IF_LedOn(MCU_RED_LED_GPIO);
     	char stx[128];
     	if (flag) {
     		sprintf(stx,"[%s] Display ON ERROR ! (0x%.2X)\n", __func__, ret);
@@ -176,28 +178,27 @@ uint8_t dat[] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
 //-----------------------------------------------------------------------------------------
 int ssd1306_init()
 {
-uint8_t len=13;
 int ret=0;
 uint8_t dat[] = {
-OLED_CONTROL_BYTE_CMD_STREAM,//0x00
-OLED_CMD_SET_CHARGE_PUMP,//0x8D
-0x14,
-OLED_CMD_SET_SEGMENT_REMAP,//0xA1
-OLED_CMD_SET_COM_SCAN_MODE,//0xC8
-OLED_CMD_SET_COLUMN_RANGE,//0x21
-0x00,
-0x7F,
-OLED_CMD_SET_PAGE_RANGE,//0x22
-0x00,
-0x07,
-OLED_CMD_DISPLAY_ON,//0xAF
-invert};//OLED_CMD_DISPLAY_INVERTED       0xA7
-//0x00 0x8D 0x14 0xA1 0xC8 0x21 0x00 0x7F 0x22 0x00 0x07 0xAF 0xA7
+	OLED_CONTROL_BYTE_CMD_STREAM,//0x00
+	OLED_CMD_SET_CHARGE_PUMP,//0x8D
+	0x14,
+	OLED_CMD_SET_SEGMENT_REMAP,//0xA1
+	OLED_CMD_SET_COM_SCAN_MODE,//0xC8
+	OLED_CMD_SET_COLUMN_RANGE,//0x21
+	0x00,
+	0x7F,
+	OLED_CMD_SET_PAGE_RANGE,//0x22
+	0x00,
+	0x07,
+	OLED_CMD_DISPLAY_ON,//0xAF
+	invert
+};//OLED_CMD_DISPLAY_INVERTED       0xA7
 
-
-    ret = I2C_IF_Write(OLED_I2C_ADDRESS, dat, len, true);
+    ret = I2C_IF_Write(OLED_I2C_ADDRESS, dat, sizeof(dat), true);
 
     if (ret) {
+    	GPIO_IF_LedOn(MCU_RED_LED_GPIO);
     	char stx[128];
     	sprintf(stx, "[%s] Display configuration failed. code: 0x%.2X\n", __func__, ret);
     	printik(TAG_OLED, stx, RED_COLOR);
@@ -213,16 +214,16 @@ void ssd1306_invert()
 uint8_t dat[] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
 int ret=0;
 
-
     if (invert == OLED_CMD_DISPLAY_INVERTED)
     	invert = OLED_CMD_DISPLAY_NORMAL;
 	else
 		invert = OLED_CMD_DISPLAY_INVERTED;
     dat[1] = invert;
 
-    ret = I2C_IF_Write(OLED_I2C_ADDRESS, dat, 2, true);
+    ret = I2C_IF_Write(OLED_I2C_ADDRESS, dat, sizeof(dat), true);
 
     if (ret) {
+    	GPIO_IF_LedOn(MCU_RED_LED_GPIO);
     	char stx[128];
     	sprintf(stx, "[%s] Display invert failed. code: 0x%.2X\n", __func__, ret);
     	printik(TAG_OLED, stx, RED_COLOR);
@@ -246,6 +247,7 @@ int rt=0;
     }
 
     i2c_err = rt;
+    if (i2c_err) GPIO_IF_LedOn(MCU_RED_LED_GPIO);
 }
 //-----------------------------------------------------------------------------------------
 void ssd1306_pattern()
@@ -258,11 +260,12 @@ int rt=0;
     for (i = 1; i < 129; i++) buf[i] = 0xFF >> (i % 8);
     for (i = 0; i < 8; i++) {
     	dat[1] = 0xB0 | i;
-    	rt = I2C_IF_Write(OLED_I2C_ADDRESS, dat, 2, true);
-    	rt = I2C_IF_Write(OLED_I2C_ADDRESS, buf, 129, true);
+    	rt = I2C_IF_Write(OLED_I2C_ADDRESS, dat, sizeof(dat), true);
+    	rt |= I2C_IF_Write(OLED_I2C_ADDRESS, buf, 129, true);
     }
 
     i2c_err = rt;
+    if (i2c_err) GPIO_IF_LedOn(MCU_RED_LED_GPIO);
 }
 //-----------------------------------------------------------------------------------------
 void ssd1306_contrast(uint8_t value)//0xff or 0x00
@@ -270,40 +273,42 @@ void ssd1306_contrast(uint8_t value)//0xff or 0x00
 uint8_t dat[] = {OLED_CONTROL_BYTE_CMD_STREAM, OLED_CMD_SET_CONTRAST, value};
 int rt=0;
 
-    rt = I2C_IF_Write(OLED_I2C_ADDRESS, dat, 3, true);
+    rt = I2C_IF_Write(OLED_I2C_ADDRESS, dat, sizeof(dat), true);
     i2c_err = rt;
+    if (i2c_err) GPIO_IF_LedOn(MCU_RED_LED_GPIO);
 }
 //-----------------------------------------------------------------------------------------
 /*
 void ssd1306_shift(bool left)
 {
-uint8_t byte;
+uint8_t byte = 0x26;
 
-    if (left) byte = 0x27; else byte = 0x26;
+    if (left) byte++;// = 0x27; else byte = 0x26;
 
 uint8_t dat[] =
 {
 	OLED_CONTROL_BYTE_CMD_STREAM,
 	0x2e,
 	byte,
-	0x0,
-	0x0,
-	0x7,
+	0,
+	0,
+	7,
 	0x3f,
 	0x2f
 };
 
-    I2C_IF_Write(OLED_I2C_ADDRESS, dat, 8, true);
+    int rt = I2C_IF_Write(OLED_I2C_ADDRESS, dat, sizeof(dat), true);
+
+    i2c_err = rt;
+    if (i2c_err) GPIO_IF_LedOn(MCU_RED_LED_GPIO);
 
 }
-*/
-//-----------------------------------------------------------------------------------------
-/*
+-----------------------------------------------------------------------------------------
 void ssd1306_scroll(bool flag)
 {
-uint8_t byte = 0x3e;// deactivate scroll (p29)
+uint8_t byte = 0x3e;
 
-    if (flag) byte++;// activate scroll (p29)
+    if (flag) byte++;
 
 uint8_t dat[] =
 {
@@ -320,7 +325,10 @@ uint8_t dat[] =
 	byte
 };
 
-    I2C_IF_Write(OLED_I2C_ADDRESS, dat, 11, true);
+    int rt = I2C_IF_Write(OLED_I2C_ADDRESS, dat, sizeof(dat), true);
+
+    i2c_err = rt;
+    if (i2c_err) GPIO_IF_LedOn(MCU_RED_LED_GPIO);
 
 }
 */
@@ -333,38 +341,43 @@ uint8_t i, lin = cy - 1, col = cx - 1;
 int len = strlen(stroka);
 uint8_t first[] =
 {
-OLED_CONTROL_BYTE_CMD_STREAM,
-OLED_CMD_SET_COLUMN_RANGE,
-col*8,
-0x7f,
-OLED_CMD_SET_PAGE_RANGE,
-lin,
-7
+		OLED_CONTROL_BYTE_CMD_STREAM,
+		OLED_CMD_SET_COLUMN_RANGE,
+		col*8,
+		0x7f,
+		OLED_CMD_SET_PAGE_RANGE,
+		lin,
+		7
 };
-uint8_t dat[4] = {OLED_CONTROL_BYTE_CMD_STREAM, 0, 0x10, 0};
-uint8_t cif[9]={OLED_CONTROL_BYTE_DATA_STREAM,0,0,0,0,0,0,0,0};
+uint8_t dat[] = {OLED_CONTROL_BYTE_CMD_STREAM, 0, 0x10, 0};
+uint8_t cif[] = {OLED_CONTROL_BYTE_DATA_STREAM,0,0,0,0,0,0,0,0};
 
-    rt = I2C_IF_Write(OLED_I2C_ADDRESS, first, 7, true);
-    //i2c_err = rt;
-    //if (rt) return;
+    rt = I2C_IF_Write(OLED_I2C_ADDRESS, first, sizeof(first), true);
+    i2c_err = rt;
+    if (rt) return;
 
     for (i = 0; i < len; i++) {
     	if (stroka[i] == '\n') {
     		dat[3] = 0xB0 | ++lin;
-    		rt = I2C_IF_Write(OLED_I2C_ADDRESS, dat, 4, true);
+    		rt = I2C_IF_Write(OLED_I2C_ADDRESS, dat, sizeof(dat), true);
     	} else {
     		memcpy(&cif[1], &font8x8[(uint8_t)stroka[i]][0], 8);
-    		rt = I2C_IF_Write(OLED_I2C_ADDRESS, cif, 9, true);
+    		rt = I2C_IF_Write(OLED_I2C_ADDRESS, cif, sizeof(cif), true);
     	}
 
     }
+
     i2c_err = rt;
+    if (i2c_err) GPIO_IF_LedOn(MCU_RED_LED_GPIO);
 
 }
 //-----------------------------------------------------------------------------------------
 void ssd1306_text(char *stroka)
 {
-    ssd1306_text_xy(stroka, 1, 1);
+	if (!i2c_err)
+		ssd1306_text_xy(stroka, 1, 1);
+	else
+		GPIO_IF_LedOn(MCU_RED_LED_GPIO);
 }
 //-----------------------------------------------------------------------------------------
 uint8_t calcx(int len)

@@ -58,7 +58,7 @@ extern uint32_t cli_id;
 extern s_lora_stat lora_stat;
 extern const char *TAG_UART;
 
-extern void serial_init();
-extern void serial_task(void *arg);
+extern void uart_lora_init();
+extern void lora_task(void *arg);
 
 #endif

@@ -60,8 +60,10 @@ extern void ssd1306_invert();
 extern void ssd1306_clear();
 extern void ssd1306_pattern();
 extern void ssd1306_contrast(uint8_t value);
-//extern void ssd1306_shift(bool left);
-//extern void ssd1306_scroll(bool flag);
+/*
+extern void ssd1306_shift(bool left);
+extern void ssd1306_scroll(bool flag);
+*/
 extern void ssd1306_text_xy(char *stroka, uint8_t cx, uint8_t cy);
 extern void ssd1306_text(char *stroka);
 extern uint8_t calcx(int len);

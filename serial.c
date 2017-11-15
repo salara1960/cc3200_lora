@@ -30,7 +30,7 @@ uint8_t bt;
     		if (rxd.wr >= lora_buf_len) rxd.wr = 0;
     		if (rxd.rd == rxd.wr) {
     			rxd.rdy = 0;
-    			//rxd.rd = rxd.wr = 0;
+    			rxd.rd = rxd.wr = 0;
     		} else rxd.rdy = 1;
     	}
     }
@@ -38,7 +38,7 @@ uint8_t bt;
     Timer_IF_InterruptClear(TBase);// Clear the timer interrupt.
 }
 //-----------------------------------------------------------------------------------------
-void serial_init()
+void uart_lora_init()
 {
     InitLora();
 
@@ -136,7 +136,7 @@ inline void get_tsensor(t_sens_t *t_s)
     t_s->cels = (t_s->faren - 32) * 5/9;
 }
 //-----------------------------------------------------------------------------------------
-void serial_task(void *arg)
+void lora_task(void *arg)
 {
 char stx[256];
 char *uks = NULL, *uke = NULL;
@@ -293,7 +293,7 @@ char *uks = NULL, *uke = NULL;
     							dur = tt / 1000;
     							if ((tt % 1000) > 500) dur++;
     							stm += dur;
-//    							SetDevTime(&stm);// !!!!!!!!!!!   SET DATE_TIME   !!!!!!!!!!!!!!!!!!!!
+    							SetDevTime(&stm);// !!!!!!!!!!!   SET DATE_TIME   !!!!!!!!!!!!!!!!!!!!
     							uks = uke + 1;
     							uke = strchr(uks,']');
     							if (uke) {

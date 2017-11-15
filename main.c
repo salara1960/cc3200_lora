@@ -1,6 +1,5 @@
 #include "func.h"
 #include "pinmux.h"
-//#include "sl_mqtt_client.h"
 #include "serial.h"
 #include "netcfg.h"
 
@@ -12,7 +11,6 @@
 
 const char *TAG_LOOP = "LOOP";
 s_evt evt;
-
 
 //*****************************************************************************
 //*****************************************************************************
@@ -29,8 +27,8 @@ void BoardInit(void);
 	extern void (* const g_pfnVectors[])(void);
     #endif
 #endif
-//****************************************************************************
-//****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
 //*****************************************************************************
 void BoardInit(void)
 {
@@ -55,7 +53,7 @@ void BoardInit(void)
     PRCMCC3200MCUInit();
 }
 //*****************************************************************************
-void loop_task(void *arg)
+void i2c_task(void *arg)
 {
 char stx[128];
 #ifdef DISPLAY
@@ -63,11 +61,9 @@ char stx[128];
 	char *uk=NULL;
 
     ssd1306_contrast(0xff);
-    //vTaskDelay(10);
     osi_Sleep(10);
     ssd1306_clear();
 #endif
-
 
 
     while (1) {
@@ -78,13 +74,13 @@ char stx[128];
     		uk = stx + strlen(stx);
 #endif
     		if (!evt.type) {
-    			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+    			GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
     			sprintf(stx+strlen(stx),"Send");
 #ifdef DISPLAY
     			row = 3;
 #endif
     		} else {
-    			GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+    			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
     			sprintf(stx+strlen(stx),"Recv");
 #ifdef DISPLAY
     			row = 6;
@@ -111,8 +107,7 @@ void main()
 {
 long lRetVal = -1;
 char stk[64]={0}, stx[128]={0};
-uint8_t i = 0, mac_addr_len = mac_len;
-uint8_t mac_addr[mac_len];
+uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
 
 
     BoardInit();// Initialize the board configurations
@@ -131,11 +126,7 @@ uint8_t mac_addr[mac_len];
     if (lRetVal < 0) {
     	Message("Error starting wifi task !!!\r\n");
         LOOP_FOREVER();
-    } else {
-    	Message("Starting wifi task Ok\r\n");
-    	//GPIO_IF_LedOn(MCU_RED_LED_GPIO);
     }
-
 
     //memset(mac_addr, 0, mac_addr_len);
     //sl_NetCfgGet(SL_MAC_ADDRESS_GET, NULL, &mac_addr_len, mac_addr);
@@ -157,22 +148,18 @@ uint8_t mac_addr[mac_len];
     i2c_err = i2c_ssd1306_init();
     if (i2c_err) Report("I2C port open failure\r\n");
     else {
-    	//vTaskDelay(10);
-    	//ssd1306_on(false);
-    	//if (!i2c_err) {
-    		//vTaskDelay(10);
+    	ssd1306_on(false);
+    	if (!i2c_err) {
     		ssd1306_init();
-    		//if (!i2c_err) {
-    			//vTaskDelay(10);
-    	    	ssd1306_pattern();
-    		//}
-    	//}
+    		if (!i2c_err) ssd1306_pattern();
+    	}
     }
+
     //**************************************************************
 #endif
 
     //**************************************************************
-    lRetVal = osi_TaskCreate(loop_task, (const signed char *)"Loop", MIN_OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);// Start the MQTT Client task
+    lRetVal = osi_TaskCreate(i2c_task, (const signed char *)"i2c_task", MIN_OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);
     if (lRetVal < 0) {
     	Message("Error start loop task !!!\r\n");
         LOOP_FOREVER();
@@ -186,14 +173,14 @@ uint8_t mac_addr[mac_len];
 
     //****************    UART1 (LORA)    **************************
     osi_MsgQCreate(&evtq, "evtq", sizeof(s_evt), 5);//create a queue to handle uart event
-    serial_init();
-    lRetVal = osi_TaskCreate(serial_task, (const signed char *)"LoRa", MAX_OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);// Start the LoRa task
+    uart_lora_init();
+    lRetVal = osi_TaskCreate(lora_task, (const signed char *)"lora_task", MAX_OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);
     if (lRetVal < 0) {
     	Message("Error start serial task !!!\r\n");
         LOOP_FOREVER();
     } else {
     	Message("Start serial task OK\r\n");
-    	//GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+    	GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
     }
     //**************************************************************
 
