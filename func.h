@@ -59,7 +59,6 @@
 
 #define UART_IF_BUFFER           256 //64
 
-
 #define BLACK_COLOR  "\x1B[30m"
 #define RED_COLOR  "\x1B[31m"
 #define GREEN_COLOR  "\x1B[32m"
@@ -85,8 +84,9 @@ typedef struct {
 
 #pragma pack(push,1)
 typedef struct {
-    uint8_t faren;
-    float cels;
+    double faren;
+	double kelv;
+    double cels;
     uint32_t vcc;
 } t_sens_t;
 #pragma pack(pop)
@@ -112,5 +112,10 @@ extern unsigned char LoraRxByte(unsigned char *byte);
 
 extern void init_adc(uint32_t pin);
 extern uint32_t GetSampleADC(uint32_t chan, bool prn);
+
+extern void get_tsensor(t_sens_t *t_s);
+#ifdef TMP006
+	extern char *str_sensor(t_sens_t *t_s);
+#endif
 
 #endif

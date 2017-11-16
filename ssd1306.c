@@ -146,7 +146,7 @@ uint8_t font8x8[128][8] = {
 //int I2C_IF_ReadFrom(unsigned char ucDevAddr,unsigned char *pucWrDataBuf,unsigned char ucWrLen,unsigned char *pucRdDataBuf,unsigned char ucRdLen)
 
 //-----------------------------------------------------------------------------------------
-int i2c_ssd1306_init()
+int i2c_port_master_init()
 {
     return I2C_IF_Open(I2C_MASTER_MODE_FST);
 }
@@ -374,10 +374,12 @@ uint8_t cif[] = {OLED_CONTROL_BYTE_DATA_STREAM,0,0,0,0,0,0,0,0};
 //-----------------------------------------------------------------------------------------
 void ssd1306_text(char *stroka)
 {
-	if (!i2c_err)
-		ssd1306_text_xy(stroka, 1, 1);
-	else
-		GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+	if (stroka) {
+		if (!i2c_err)
+			ssd1306_text_xy(stroka, 1, 1);
+		else
+			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+	}
 }
 //-----------------------------------------------------------------------------------------
 uint8_t calcx(int len)

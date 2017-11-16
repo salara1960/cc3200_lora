@@ -3,5 +3,6 @@
 
     #undef NOTERM
     #define DISPLAY
+	#define TMP006
 
 #endif

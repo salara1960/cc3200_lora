@@ -2,6 +2,7 @@
 #include "pinmux.h"
 #include "serial.h"
 #include "netcfg.h"
+#include "tmp006.h"
 
 
 #define mac_len 6
@@ -57,6 +58,10 @@ void i2c_task(void *arg)
 {
 char stx[128];
 #ifdef DISPLAY
+	#ifdef TMP006
+		t_sens_t ts;
+		char *st=NULL;
+	#endif
 	uint8_t col = 0, row = 0;
 	char *uk=NULL;
 
@@ -77,18 +82,26 @@ char stx[128];
     			GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
     			sprintf(stx+strlen(stx),"Send");
 #ifdef DISPLAY
-    			row = 3;
+    			row = 7;
 #endif
     		} else {
     			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
     			sprintf(stx+strlen(stx),"Recv");
 #ifdef DISPLAY
-    			row = 6;
+    			row = 8;
 #endif
     		}
     		sprintf(stx+strlen(stx)," msg #%u", evt.num);
 #ifdef DISPLAY
     		if (!i2c_err) {
+#ifdef TMP006
+    			get_tsensor(&ts);
+    			st = str_sensor(&ts);
+    			if (st) {
+    				ssd1306_text(st);
+    				free(st);
+    			}
+#endif
     			col = calcx(strlen(uk));
     			ssd1306_text_xy(uk, col, row);
     		}
@@ -145,7 +158,7 @@ uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
 #ifdef DISPLAY
     //*********************    SSD1306    **************************
 
-    i2c_err = i2c_ssd1306_init();
+    i2c_err = i2c_port_master_init();
     if (i2c_err) Report("I2C port open failure\r\n");
     else {
     	ssd1306_on(false);
@@ -154,6 +167,10 @@ uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
     		if (!i2c_err) ssd1306_pattern();
     	}
     }
+
+#ifdef TMP006
+    config_TMP006(TMP006_ADDR, TMP006_CFG_8SAMPLE);
+#endif
 
     //**************************************************************
 #endif

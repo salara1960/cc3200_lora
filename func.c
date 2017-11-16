@@ -1,4 +1,7 @@
 #include "func.h"
+#ifdef TMP006
+	#include "tmp006.h"
+#endif
 
 uint32_t cli_id = 0;
 OsiMsgQ_t evtq = NULL;
@@ -141,4 +144,33 @@ uint8_t cnt = 4;
     return ret;
 }
 //--------------------------------------------------------------------
+inline void get_tsensor(t_sens_t *t_s)
+{
+    t_s->vcc = GetSampleADC(TheChan, false);//4095 * 0.8;//(uint32_t)(adc1_get_raw(ADC1_TEST_CHANNEL) * 0.8);
+	#ifdef TMP006
+    	//t_s->kelv = readDieTempC(TMP006_ADDR) + 273.15;
+    	t_s->kelv = readObjTempC(TMP006_ADDR);
+    	t_s->cels = t_s->kelv - 273.15;
+    	t_s->faren = 1.8 * (t_s->kelv - 273) + 32;
+	#else
+    	t_s->faren = 78.0;//temprature_sens_read();// - 40;
+    	t_s->cels = (t_s->faren - 32) * 5/9;
+	#endif
+}
 //--------------------------------------------------------------------
+#ifdef TMP006
+	char *str_sensor(t_sens_t *t_s)
+	{
+		char *st = (char *)calloc(1, 80);
+		if (st) {
+			sprintf(st," Temperature :\n   %.2f%cC\n   %.2f%cF\n   %.2f%cK\n  ADC : %u mv",
+							t_s->cels, 0x1f,
+							t_s->faren,0x1f,
+							t_s->kelv, 0x1f,
+							t_s->vcc);
+		}
+		return st;
+	}
+#endif
+//--------------------------------------------------------------------
+

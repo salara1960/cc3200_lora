@@ -129,12 +129,13 @@ bool lora_check_status()
     return (bool)pctrl.status;
 }
 //-----------------------------------------------------------------------------------------
-inline void get_tsensor(t_sens_t *t_s)
-{
-    t_s->vcc = GetSampleADC(TheChan, false);//4095 * 0.8;//(uint32_t)(adc1_get_raw(ADC1_TEST_CHANNEL) * 0.8);
-    t_s->faren = 78;//temprature_sens_read();// - 40;
-    t_s->cels = (t_s->faren - 32) * 5/9;
-}
+//void get_tsensor(t_sens_t *t_s)
+//{
+//    t_s->vcc = GetSampleADC(TheChan, false);//4095 * 0.8;//(uint32_t)(adc1_get_raw(ADC1_TEST_CHANNEL) * 0.8);
+//    t_s->faren = 78;//temprature_sens_read();// - 40;
+//    t_s->cels = (t_s->faren - 32) * 5/9;
+//    t_s->cels = readDieTempC(TMP006_ADDR);
+//}
 //-----------------------------------------------------------------------------------------
 void lora_task(void *arg)
 {
@@ -320,7 +321,13 @@ char *uks = NULL, *uke = NULL;
 
 
     		lvl = gpio_get_level(U2_SW2);
-    		if (lvl) tmneeds = get_tmr(10);
+    		if (lvl) {
+    			tmneeds = get_tmr(10);
+    			if (i2c_err) {
+    				i2c_err = 0;
+    				GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+    			}
+    		}
 
     		if (needs) {
     			if (check_tmr(tmneeds)) needs = false;

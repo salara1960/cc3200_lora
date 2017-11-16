@@ -54,7 +54,7 @@
 #define OLED_CMD_SET_CHARGE_PUMP        0x8D    // follow with 0x14
 
 extern int ssd1306_on(bool flag);
-extern int i2c_ssd1306_init();
+extern int i2c_port_master_init();
 extern int ssd1306_init();
 extern void ssd1306_invert();
 extern void ssd1306_clear();
