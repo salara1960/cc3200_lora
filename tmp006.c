@@ -3,7 +3,7 @@
 #ifdef TMP006
 #include "tmp006.h"
 
-
+// from TI CC3200 SDK-1.3.0 (i2c_if.c)
 //int I2C_IF_Write(unsigned char ucDevAddr, unsigned char *pucData, unsigned char ucLen, unsigned char ucStop)
 //int I2C_IF_Read(unsigned char ucDevAddr, unsigned char *pucData, unsigned char ucLen)
 //int I2C_IF_ReadFrom(unsigned char ucDevAddr,unsigned char *pucWrDataBuf,unsigned char ucWrLen,unsigned char *pucRdDataBuf,unsigned char ucRdLen)
@@ -19,7 +19,7 @@ uint8_t rd_dat[sizeof(uint16_t)] = {0};
 
     if (!I2C_IF_ReadFrom(addr, &wr_reg, 1, rd_dat, sizeof(rd_dat))) {
     	data = rd_dat[0]; data <<= 8; data |= rd_dat[1];
-    } else GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+    } else GPIO_IF_LedOn(MCU_RED_LED_GPIO);//Set error led (RED)
 
     return data;
 }
@@ -65,14 +65,14 @@ double readObjTempC(uint8_t addr)
 
     // Equations for calculating temperature found in section 5.1 in the user guide
     double tdie_tref = Tdie - TMP006_TREF;
-    double S = (1 + TMP006_A1*tdie_tref + TMP006_A2*tdie_tref*tdie_tref);
+    double S = (1 + TMP006_A1 * tdie_tref + TMP006_A2 * tdie_tref * tdie_tref);
     S *= TMP006_S0;
     S /= 10000000;
     S /= 10000000;
 
-    double Vos = TMP006_B0 + TMP006_B1*tdie_tref + TMP006_B2*tdie_tref*tdie_tref;
+    double Vos = TMP006_B0 + TMP006_B1 * tdie_tref + TMP006_B2 * tdie_tref * tdie_tref;
 
-    double fVobj = (Vobj - Vos) + TMP006_C2*(Vobj-Vos)*(Vobj-Vos);
+    double fVobj = (Vobj - Vos) + TMP006_C2 * (Vobj-Vos) * (Vobj-Vos);
 
     double Tobj = sqrt(sqrt(Tdie * Tdie * Tdie * Tdie + fVobj/S));
 

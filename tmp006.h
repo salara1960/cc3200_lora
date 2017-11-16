@@ -5,7 +5,6 @@
 
 #define TMP006_ADDR 0x41
 
-
 // Constants for calculating object temperature
 #define TMP006_B0 -0.0000294
 #define TMP006_B1 -0.00000057
@@ -28,25 +27,16 @@
 #define TMP006_CFG_DRDY     0x0080
 
 // Registers to read thermopile voltage and sensor temperature
-#define TMP006_VOBJ  0x00
+#define TMP006_VOBJ 0x00
 #define TMP006_TAMB 0x01
 #define TMP006_CONFIG 0x02
 
 
-// Configures sensor, use before reading from it
-extern void config_TMP006(uint8_t addr, uint16_t samples);
-
-// Read raw sensor temperature
-extern int16_t readRawDieTemperature(uint8_t addr);
-
-// Read raw thermopile voltage
-//extern int16_t readRawVoltage(uint8_t addr);
-
-// Calculate object temperature based on raw sensor temp and thermopile voltage
-extern double readObjTempC(uint8_t addr);
-
-// Caculate sensor temperature based on raw reading
-extern double readDieTempC(uint8_t addr);
+extern void config_TMP006(uint8_t addr, uint16_t samples);// Configures sensor, use before reading from it
+//extern int16_t readRawDieTemperature(uint8_t addr);// Read raw sensor temperature
+//extern int16_t readRawVoltage(uint8_t addr);// Read raw thermopile voltage
+extern double readObjTempC(uint8_t addr);// Calculate object temperature based on raw sensor temp and thermopile voltage
+extern double readDieTempC(uint8_t addr);// Caculate sensor temperature based on raw reading
 
 #endif
 
