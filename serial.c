@@ -322,17 +322,18 @@ char *uks = NULL, *uke = NULL;
     							dur = tt / 1000;
     							if ((tt % 1000) > 500) dur++;
     							stm += dur;
-    							SetDevTime(&stm);// !!!!!!!!!!!   SET DATE_TIME   !!!!!!!!!!!!!!!!!!!!
+    							//SetDevTime(&stm);// !!!!!!!!!!!   SET DATE_TIME   !!!!!!!!!!!!!!!!!!!!
+    							PRCMRTCSet((unsigned long)stm, 0);
     							uks = uke + 1;
     							uke = strchr(uks,']');
     							if (uke) {
     								*uke = '\0';
     								//setenv("TZ", uks, 1); tzset();
     								ts_set = true;
-    								//sprintf(stx,"Time %u+%u (%u-%u|%u) with zone %s\n",
-    								//			(uint32_t)(stm-dur), (uint32_t)dur, (uint32_t)wtt_start,
-    								//			(uint32_t)wtt_stop, (uint32_t)(tt % 1000), uks);
-    								//printik(TAG_UART, stx, BROWN_COLOR);
+    								sprintf(stx,"Time %u+%u (%u-%u|%u) with zone %s\n",
+    											(uint32_t)(stm-dur), (uint32_t)dur, (uint32_t)wtt_start,
+    											(uint32_t)wtt_stop, (uint32_t)(tt % 1000), uks);
+    								printik(TAG_UART, stx, BROWN_COLOR);
     							}
     						}
     					}
