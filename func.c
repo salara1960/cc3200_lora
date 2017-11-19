@@ -62,6 +62,7 @@ inline void printik(const char *tag, const char *buf, const char *color)
 void InitLora()
 {
     MAP_PRCMPeripheralReset(PRCM_UARTA1);
+    MAP_UARTFIFOLevelSet(LORA, UART_FIFO_TX1_8, UART_FIFO_RX1_8);
     MAP_UARTConfigSetExpClk(LORA,
 			    MAP_PRCMPeripheralClockGet(LORA_PERIPH),
 			    UART_BAUD_RATE,

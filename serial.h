@@ -25,7 +25,7 @@
 
 #define mprintf Report
 
-#define lora_buf_len UART_IF_BUFFER-1
+#define lora_buf_len 256
 
 #pragma pack(push,1)
 typedef struct
@@ -42,12 +42,13 @@ typedef struct
 #pragma pack(push,1)
 typedef struct
 {
-    uint8_t rdy;
-    uint8_t rd;
-    uint8_t wr;
+    uint16_t rd;
+    uint16_t wr;
     char buf[lora_buf_len];
 } s_lora_buf;
 #pragma pack(pop)
+
+//extern SemaphoreHandle_t lora_mutex;
 
 extern s_lora_buf rx_buf;
 

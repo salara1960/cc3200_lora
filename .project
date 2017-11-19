@@ -65,7 +65,7 @@
 	<variableList>
 		<variable>
 			<name>CC3200_SDK_ROOT</name>
-			<value>file:/usr/local/home/alarm/ti/cc3200-sdk</value>
+			<value>file:/home/alarm/ti/cc3200-sdk</value>
 		</variable>
 		<variable>
 			<name>ORIGINAL_PROJECT_ROOT</name>

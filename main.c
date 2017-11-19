@@ -190,6 +190,7 @@ uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
 
     //****************    UART1 (LORA)    **************************
     osi_MsgQCreate(&evtq, "evtq", sizeof(s_evt), 5);//create a queue to handle uart event
+//    lora_mutex = xSemaphoreCreateMutex();
     uart_lora_init();
     lRetVal = osi_TaskCreate(lora_task, (const signed char *)"lora_task", MAX_OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);
     if (lRetVal < 0) {

@@ -41,6 +41,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "semphr.h"
 
 
 #include "hdr.h"
@@ -51,6 +52,9 @@
 
 #define UART_BAUD_RATE  115200
 #define SYSCLK          80000000
+
+#define MS_TO_TICK(ms)   ((SYSCLK/1000) * (ms))
+#define TICK_TO_MS(ts)   (((double) 1000/(double) SYSCLK) * (double) (ts))
 
 #define LORA             	UARTA1_BASE
 #define LORA_PERIPH      	PRCM_UARTA1

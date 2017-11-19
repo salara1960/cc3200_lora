@@ -18,22 +18,43 @@ static bool mode = false;//at_command
 s_lora_buf rxd;
 static volatile unsigned long TBase = TIMERA0_BASE;
 
+/*
+SemaphoreHandle_t lora_mutex;
+if (xSemaphoreTake(lora_mutex, 0) == pdTRUE) {
+	........
+	xSemaphoreGive(lora_mutex);
+}
+*/
 //******************************************************************************************
+/*
 static void LoraHandler()
 {
 uint8_t bt;
 
+//    MAP_UARTIntDisable(LORA, UART_INT_RX);
+
     while (MAP_UARTCharsAvail(LORA)) {
-    	bt = MAP_UARTCharGetNonBlocking(LORA);
-    	if ( (bt >= 0x0a) && (bt <= 0x7f) ) {
-    		rxd.buf[rxd.wr++] = bt;
-    		if (rxd.wr >= lora_buf_len) rxd.wr = 0;
-    		if (rxd.rd == rxd.wr) {
-    			rxd.rdy = 0;
-    			rxd.rd = rxd.wr = 0;
-    		} else rxd.rdy = 1;
+    	bt  = MAP_UARTCharGet(LORA);
+    	if ((bt >= 0x0a) && (bt <= 0x7f)) {
+    		rxd.buf[rxd.wr++] = bt; if (rxd.wr == lora_buf_len) rxd.wr = 0;
+//    		if (bt == '\n') { rxd.rdy = 1; break; }
     	}
     }
+
+    MAP_UARTIntClear(LORA, UART_INT_RX);
+//    MAP_UARTIntEnable(LORA, UART_INT_RX);
+}
+*/
+//-----------------------------------------------------------------------------------------
+static void LoraHandler()
+{
+
+	while (MAP_UARTCharsAvail(LORA)) {
+		rxd.buf[rxd.wr++] = MAP_UARTCharGetNonBlocking(LORA);
+		if (rxd.wr == lora_buf_len) rxd.wr = 0;
+	}
+
+	if (rxd.rd == rxd.wr) memset((uint8_t *)&rxd, 0, sizeof(s_lora_buf));
 
     Timer_IF_InterruptClear(TBase);// Clear the timer interrupt.
 }
@@ -42,9 +63,12 @@ void uart_lora_init()
 {
     InitLora();
 
-    while (MAP_UARTCharsAvail(LORA)) MAP_UARTCharGetNonBlocking(LORA);
+    while (MAP_UARTCharsAvail(LORA)) LORAUartGetChar();
 
     memset(&rxd, 0, sizeof(s_lora_buf));
+
+//    MAP_UARTIntRegister(LORA, LoraHandler);
+//    MAP_UARTIntEnable(LORA, UART_INT_RX);
 
     // Configuring the timer
     Timer_IF_Init(PRCM_TIMERA0, TBase, TIMER_CFG_PERIODIC, TIMER_A, 0);
@@ -58,15 +82,15 @@ void uart_lora_init()
 #ifndef ESP32
 void gpio_set_level(int pin, bool val)
 {
-	GPIO_IF_GetPortNPin(pin, &ucPort, &ucPin);
+    GPIO_IF_GetPortNPin(pin, &ucPort, &ucPin);
     GPIO_IF_Set(pin, ucPort, ucPin, val);
 
 }
 //-----------------------------------------------------------------------------------------
 bool gpio_get_level(int pin)
 {
-	GPIO_IF_GetPortNPin(pin, &ucPort, &ucPin);
-	return GPIO_IF_Get(pin, ucPort, ucPin);
+    GPIO_IF_GetPortNPin(pin, &ucPort, &ucPin);
+    return GPIO_IF_Get(pin, ucPort, ucPin);
 }
 #endif
 //-----------------------------------------------------------------------------------------
@@ -129,13 +153,15 @@ bool lora_check_status()
     return (bool)pctrl.status;
 }
 //-----------------------------------------------------------------------------------------
-//void get_tsensor(t_sens_t *t_s)
-//{
-//    t_s->vcc = GetSampleADC(TheChan, false);//4095 * 0.8;//(uint32_t)(adc1_get_raw(ADC1_TEST_CHANNEL) * 0.8);
-//    t_s->faren = 78;//temprature_sens_read();// - 40;
-//    t_s->cels = (t_s->faren - 32) * 5/9;
-//    t_s->cels = readDieTempC(TMP006_ADDR);
-//}
+/*
+bool get_sym(char *symbol)
+{
+	if (MAP_UARTCharsAvail(LORA)) {
+		*symbol = MAP_UARTCharGet(LORA);
+		return true;
+	} else return false;
+}
+*/
 //-----------------------------------------------------------------------------------------
 void lora_task(void *arg)
 {
@@ -143,7 +169,7 @@ char stx[256];
 char *uks = NULL, *uke = NULL;
 
 
-	wait_ack = 120000;
+	wait_ack = 60000;
 
     sprintf(stx, "Start serial_task\r\n"); printik(TAG_UART, stx, CYAN_COLOR);
 
@@ -157,7 +183,7 @@ char *uks = NULL, *uke = NULL;
     	lora_reset();
     	vTaskDelay(500);
 
-    	char cmds[BSIZE], tmp[32] = {0};
+    	char cmds[BSIZE], tmp[32] = {0}, sym;
     	uint32_t len = 0;
     	uint8_t lvl = 0;
     	bool needs = false;
@@ -198,30 +224,32 @@ char *uks = NULL, *uke = NULL;
     			pMessage(stx);
 #endif
     			LoraTxBuf(cmds);
-    			tms = get_tmr(at_cmd[allcmd].wait);
     			len = 0; memset(data, 0, BSIZE);
+    			tms = get_tmr(at_cmd[allcmd].wait);
     			while (!check_tmr(tms)) {
-    				if ((rxd.rd != rxd.wr) && rxd.rdy) {
-    					if (rxd.rd >= lora_buf_len) rxd.rd = 0;
-    					data[len++] = rxd.buf[rxd.rd++];
-    					if ( (strstr(data, "\r\n")) || (len >= BSIZE - 2) ) {
-    						if (strstr(data, "ERROR:")) {
-    							sprintf(stx,"%s%s%s", RED_COLOR, data, STOP_COLOR);
-    							pMessage(stx);
-    						} else {
+    				    while (rxd.rd != rxd.wr) {
+    				    	sym = rxd.buf[rxd.rd++];
+    				    	data[len++] = sym;
+    				    	if (rxd.rd == lora_buf_len) rxd.rd = 0;
+    				    	if (sym == '\n') break;
+    				    }
+    				//if (get_sym(&sym)) data[len++] = sym;
+    				if ( (strstr(data, "\r\n")) || (len >= BSIZE - 2) ) {
+    					if (strstr(data, "ERROR:")) {
+    						sprintf(stx,"%s%s%s", RED_COLOR, data, STOP_COLOR);
+    						pMessage(stx);
+    					} else {
 #ifdef PRINT_AT
-    							sprintf(stx,"%s", data);
-    							pMessage(stx);
+    						sprintf(stx,"%s", data);
+    						pMessage(stx);
 #endif
-    							if (data[0] == '+') put_at_value(allcmd, data);
-    						}
-    						break;
+    						if (data[0] == '+') put_at_value(allcmd, data);
     					}
+    					break;
     				}
-
     			}
     			allcmd++;
-    			vTaskDelay(25);//50//200
+    			vTaskDelay(20);//50//200
     		}//while (allcmd < TotalCmd)
 
     		if (!mode) {//at_command mode
@@ -271,9 +299,9 @@ char *uks = NULL, *uke = NULL;
     			}
     		}
 
-    		while ((rxd.rd != rxd.wr) && rxd.rdy) {
-        		if (rxd.rd >= lora_buf_len) rxd.rd = 0;
-        		data[len++] = rxd.buf[rxd.rd++];
+    		while (rxd.rd != rxd.wr) {
+    			data[len++] = rxd.buf[rxd.rd++];
+    			if (rxd.rd == lora_buf_len) rxd.rd = 0;
     			if ( (strchr(data, '\n')) || (len >= BSIZE - 2) ) {
     				wtt_stop = get_tmr(0);
     				if (!strchr(data,'\n')) sprintf(data,"\n");
@@ -299,8 +327,7 @@ char *uks = NULL, *uke = NULL;
     							uke = strchr(uks,']');
     							if (uke) {
     								*uke = '\0';
-    								//setenv("TZ", uks, 1);
-    								//tzset();
+    								//setenv("TZ", uks, 1); tzset();
     								ts_set = true;
     								//sprintf(stx,"Time %u+%u (%u-%u|%u) with zone %s\n",
     								//			(uint32_t)(stm-dur), (uint32_t)dur, (uint32_t)wtt_start,
