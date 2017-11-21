@@ -184,7 +184,7 @@ char *uks = NULL, *uke = NULL;
     	vTaskDelay(500);
 
     	char cmds[BSIZE], tmp[32] = {0}, sym;
-    	uint32_t len = 0;
+    	uint32_t len = 0, dl = 0, srv_ip = 0;
     	uint8_t lvl = 0;
     	bool needs = false;
     	TickType_t tms = 0, tmneeds = 0, wtt_start=0, wtt_stop=0, dur=0;
@@ -192,8 +192,7 @@ char *uks = NULL, *uke = NULL;
     	s_evt evt;
     	memset(&lora_stat, 0, sizeof(s_lora_stat));
     	lora_stat.bandw=6;
-
-
+    	uint8_t *maddr = (uint8_t *)&srv_ip;
 
     	while (true) {
 
@@ -310,6 +309,24 @@ char *uks = NULL, *uke = NULL;
     				printik(TAG_UART, stx, BROWN_COLOR);
     				//---------------
     				if (!ts_set) {
+    					//--------------- IP -------------------
+    					uks = strstr(data, "IP:");
+    					if (uks) {
+    						uks += 3;
+    						uke = strchr(uks,' ');
+    						if (uke) {
+    							dl = (uint32_t)(uke-uks);
+    							if (dl > 8) dl = 8;
+    							memset(tmp, 0, 32);
+    							sprintf(tmp,"0x%.*s", dl, uks);
+    							srv_ip = sl_Htonl(strtoul(tmp, NULL, 16));
+    							sprintf(stx,"Server addr : %s - %u.%u.%u.%u\n",
+    									tmp,
+										*maddr, *(maddr+1), *(maddr+2), *(maddr+3));
+    							printik(TAG_UART, stx, BROWN_COLOR);
+    					    }
+    					}
+    					//--------------------------------------
     					uks = strstr(data, "TS[");
     					if (uks) {
     						uks += 3;
