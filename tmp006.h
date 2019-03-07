@@ -27,8 +27,8 @@
 #define TMP006_CFG_DRDY     0x0080
 
 // Registers to read thermopile voltage and sensor temperature
-#define TMP006_VOBJ 0x00
-#define TMP006_TAMB 0x01
+#define TMP006_VOBJ   0x00
+#define TMP006_TAMB   0x01
 #define TMP006_CONFIG 0x02
 
 

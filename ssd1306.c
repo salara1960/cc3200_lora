@@ -153,7 +153,7 @@ int i2c_port_master_init()
 //-----------------------------------------------------------------------------------------
 int ssd1306_on(bool flag)
 {
-int ret=0;
+int ret = 0;
 uint8_t dat[] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
 
     if (flag) dat[1] = OLED_CMD_DISPLAY_ON; else dat[1] = OLED_CMD_DISPLAY_OFF;
@@ -178,7 +178,7 @@ uint8_t dat[] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
 //-----------------------------------------------------------------------------------------
 int ssd1306_init()
 {
-int ret=0;
+int ret = 0;
 uint8_t dat[] = {
 	OLED_CONTROL_BYTE_CMD_STREAM,//0x00
 	OLED_CMD_SET_CHARGE_PUMP,//0x8D
@@ -212,7 +212,7 @@ uint8_t dat[] = {
 void ssd1306_invert()
 {
 uint8_t dat[] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
-int ret=0;
+int ret = 0;
 
     if (invert == OLED_CMD_DISPLAY_INVERTED)
     	invert = OLED_CMD_DISPLAY_NORMAL;
@@ -236,7 +236,7 @@ int ret=0;
 void ssd1306_clear()
 {
 uint8_t dat[2] = {0}, zero[129] = {0}, i;
-int rt=0;
+int rt = 0;
 
     zero[0] = OLED_CONTROL_BYTE_DATA_STREAM;
     dat[0] = OLED_CONTROL_BYTE_CMD_SINGLE;
@@ -254,7 +254,7 @@ void ssd1306_pattern()
 {
 uint8_t i, dat[] = {OLED_CONTROL_BYTE_CMD_SINGLE, 0};
 uint8_t buf[129] = {0};
-int rt=0;
+int rt = 0;
 
     buf[0] = OLED_CONTROL_BYTE_DATA_STREAM;
     for (i = 1; i < 129; i++) buf[i] = 0xFF >> (i % 8);
@@ -271,7 +271,7 @@ int rt=0;
 void ssd1306_contrast(uint8_t value)//0xff or 0x00
 {
 uint8_t dat[] = {OLED_CONTROL_BYTE_CMD_STREAM, OLED_CMD_SET_CONTRAST, value};
-int rt=0;
+int rt = 0;
 
     rt = I2C_IF_Write(OLED_I2C_ADDRESS, dat, sizeof(dat), true);
     i2c_err = rt;
@@ -335,8 +335,7 @@ uint8_t dat[] =
 //-----------------------------------------------------------------------------------------
 void ssd1306_text_xy(char *stroka, uint8_t cx, uint8_t cy)
 {
-int rt=0;
-
+int rt = 0;
 uint8_t i, lin = cy - 1, col = cx - 1;
 int len = strlen(stroka);
 uint8_t first[] =

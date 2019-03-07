@@ -22,9 +22,9 @@ void PinMuxConfig(void)
 
 #ifdef DISPLAY
     MAP_PRCMPeripheralClkEnable(PRCM_I2CA0, PRCM_RUN_MODE_CLK);
-    // Configure PIN_05 (GPIO14) for I2C0 I2C_SCL
+    // Configure PIN_05 (GPIO14) for I2C0 I2C_SCL - P5
     MAP_PinTypeI2C(PIN_05, PIN_MODE_5);
-    // Configure PIN_06 (GPIO15) for I2C0 I2C_SDA
+    // Configure PIN_06 (GPIO15) for I2C0 I2C_SDA - P6
     MAP_PinTypeI2C(PIN_06, PIN_MODE_5);
 #endif
 

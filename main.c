@@ -5,10 +5,10 @@
 #include "tmp006.h"
 
 
-#define mac_len 6
+#define mac_len                 6
 #define TASK_PRIORITY           5
-#define MAX_OSI_STACK_SIZE          4096
-#define MIN_OSI_STACK_SIZE          2048
+#define MAX_OSI_STACK_SIZE      4096
+#define MIN_OSI_STACK_SIZE      2048
 
 const char *TAG_LOOP = "LOOP";
 s_evt evt;
@@ -33,7 +33,6 @@ void BoardInit(void);
 //*****************************************************************************
 void BoardInit(void)
 {
-    /* In case of TI-RTOS vector table is initialize by OS itself */
 #ifndef USE_TIRTOS
     //
     // Set vector table base
@@ -60,7 +59,7 @@ char stx[128];
 #ifdef DISPLAY
 	#ifdef TMP006
 		t_sens_t ts;
-		char *st=NULL;
+		char *st = NULL;
 	#endif
 	uint8_t col = 0, row = 0;
 	char *uk=NULL;
@@ -119,7 +118,7 @@ char stx[128];
 void main()
 {
 long lRetVal = -1;
-char stk[64]={0}, stx[128]={0};
+char stk[64] = {0}, stx[128] = {0};
 uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
 
 
@@ -145,8 +144,8 @@ uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
     //sl_NetCfgGet(SL_MAC_ADDRESS_GET, NULL, &mac_addr_len, mac_addr);
     for (i = 0; i < mac_addr_len; i++) {
     	mac_addr[i] = i + 1;
-    	if (i<5) sprintf(stk+strlen(stk),"%02X:", mac_addr[i]);
-	    	else sprintf(stk+strlen(stk),"%02X", mac_addr[i]);
+    	if (i < 5) sprintf(stk+strlen(stk),"%02X:", mac_addr[i]);
+	    	  else sprintf(stk+strlen(stk),"%02X", mac_addr[i]);
     }
     memcpy(&cli_id, &mac_addr[2], 4);
     cli_id = ntohl(cli_id);
@@ -176,7 +175,12 @@ uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
 #endif
 
     //**************************************************************
-    lRetVal = osi_TaskCreate(i2c_task, (const signed char *)"i2c_task", MIN_OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);
+    lRetVal = osi_TaskCreate(i2c_task,
+                             (const signed char *)"i2c_task",
+                             MIN_OSI_STACK_SIZE,
+                             NULL,
+                             TASK_PRIORITY,
+                             NULL);
     if (lRetVal < 0) {
     	Message("Error start loop task !!!\r\n");
         LOOP_FOREVER();
@@ -192,7 +196,12 @@ uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
     osi_MsgQCreate(&evtq, "evtq", sizeof(s_evt), 5);//create a queue to handle uart event
 //    lora_mutex = xSemaphoreCreateMutex();
     uart_lora_init();
-    lRetVal = osi_TaskCreate(lora_task, (const signed char *)"lora_task", MAX_OSI_STACK_SIZE, NULL, TASK_PRIORITY, NULL);
+    lRetVal = osi_TaskCreate(lora_task,
+                             (const signed char *)"lora_task",
+                             MAX_OSI_STACK_SIZE,
+                             NULL,
+                             TASK_PRIORITY,
+                             NULL);
     if (lRetVal < 0) {
     	Message("Error start serial task !!!\r\n");
         LOOP_FOREVER();

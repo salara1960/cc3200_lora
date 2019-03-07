@@ -26,9 +26,9 @@ typedef struct {
 
     unsigned syncl:4;  //0..8
     unsigned power:3;  //0..7 //0—20dbm,  1—17dbm, 2—15dbm, 3—10dbm, 4-?, 5—8dbm, 6—5dbm, 7—2dbm
-    unsigned crc:1;    //0..1
+    unsigned crc:  1;  //0..1
 
-    unsigned chan:4;   //0..F — 0..15 channel
+    unsigned chan: 4;  //0..F — 0..15 channel
     unsigned bandw:4;  //6—62.5KHZ, 7—125KHZ, 8—250KHZ, 9—500KHZ
 
     unsigned hfss:1;   //0..1

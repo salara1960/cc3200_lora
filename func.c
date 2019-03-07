@@ -7,7 +7,7 @@ uint32_t cli_id = 0;
 OsiMsgQ_t evtq = NULL;
 uint32_t ThePin = PIN_58;
 uint32_t TheChan = ADC_CH_1;
-int i2c_err=0;
+int i2c_err = 0;
 
 //--------------------------------------------------------------------
 void pMessage(const char *st)
@@ -31,9 +31,9 @@ struct tm *ct = localtime(tim);
 	dt.sl_tm_sec  = ct->tm_sec;
 
 	sl_DevSet(SL_DEVICE_GENERAL_CONFIGURATION,
-			SL_DEVICE_GENERAL_CONFIGURATION_DATE_TIME,
-			sizeof(SlDateTime_t),
-			(_u8 *)&dt);
+			  SL_DEVICE_GENERAL_CONFIGURATION_DATE_TIME,
+			  sizeof(SlDateTime_t),
+			  (_u8 *)&dt);
 
 }
 //--------------------------------------------------------------------
@@ -64,9 +64,9 @@ void InitLora()
     MAP_PRCMPeripheralReset(PRCM_UARTA1);
     MAP_UARTFIFOLevelSet(LORA, UART_FIFO_TX1_8, UART_FIFO_RX1_8);
     MAP_UARTConfigSetExpClk(LORA,
-			    MAP_PRCMPeripheralClockGet(LORA_PERIPH),
-			    UART_BAUD_RATE,
-			    (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
+                            MAP_PRCMPeripheralClockGet(LORA_PERIPH),
+                            UART_BAUD_RATE,
+                            (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
     Message("Init UART1 (Lora) done.\r\n");
 }
 //--------------------------------------------------------------------
@@ -137,7 +137,7 @@ uint8_t cnt = 4;
     //
     // Print out ADC samples
     if (prn) {
-    	char st[128]={0};
+    	char st[128];
     	sprintf(st,"Chan=%u Data=%u TimeStamp=%u Vcc=%.3fv\r\n", chan, ret, tsp, (float)ret/1000.0);//(float)(( ret*1.4)/4096) );
     	Message(st);
     }
@@ -165,10 +165,10 @@ inline void get_tsensor(t_sens_t *t_s)
 		char *st = (char *)calloc(1, 80);
 		if (st) {
 			sprintf(st," Temperature :\n   %.2f%cC\n   %.2f%cF\n   %.2f%cK\n  ADC : %u mv",
-							t_s->cels, 0x1f,
-							t_s->faren,0x1f,
-							t_s->kelv, 0x1f,
-							t_s->vcc);
+					    t_s->cels, 0x1f,
+						t_s->faren,0x1f,
+						t_s->kelv, 0x1f,
+						t_s->vcc);
 		}
 		return st;
 	}

@@ -10,15 +10,17 @@
 
 //*****************************************************************************************
 
-// Read 16 bit int from I2C address addr and register reg
+// Read 16 bit from I2C address addr and register reg
 uint16_t i2c_read16(uint8_t addr, uint8_t reg)
 {
-uint16_t data=0;
+uint16_t data = 0;
 uint8_t wr_reg = reg;
 uint8_t rd_dat[sizeof(uint16_t)] = {0};
 
     if (!I2C_IF_ReadFrom(addr, &wr_reg, 1, rd_dat, sizeof(rd_dat))) {
-    	data = rd_dat[0]; data <<= 8; data |= rd_dat[1];
+    	data = rd_dat[0];
+    	data <<= 8;
+    	data |= rd_dat[1];
     } else GPIO_IF_LedOn(MCU_RED_LED_GPIO);//Set error led (RED)
 
     return data;

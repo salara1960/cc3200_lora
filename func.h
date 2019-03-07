@@ -61,18 +61,21 @@
 #define LORAUartGetChar()	MAP_UARTCharGet(LORA)
 #define LORAUartPutChar(c)	MAP_UARTCharPut(LORA,c)
 
-#define UART_IF_BUFFER           256 //64
+#ifdef UART_IF_BUFFER
+    #undef UART_IF_BUFFER
+    #define UART_IF_BUFFER           256 //64
+#endif
 
-#define BLACK_COLOR  "\x1B[30m"
-#define RED_COLOR  "\x1B[31m"
-#define GREEN_COLOR  "\x1B[32m"
-#define BROWN_COLOR  "\x1B[33m"
-#define BLUE_COLOR  "\x1B[34m"
+#define BLACK_COLOR    "\x1B[30m"
+#define RED_COLOR      "\x1B[31m"
+#define GREEN_COLOR    "\x1B[32m"
+#define BROWN_COLOR    "\x1B[33m"
+#define BLUE_COLOR     "\x1B[34m"
 #define MAGENTA_COLOR  "\x1B[35m"
-#define CYAN_COLOR  "\x1B[36m"
-#define WHITE_COLOR "\x1B[0m"
-#define START_COLOR CYAN_COLOR
-#define STOP_COLOR  WHITE_COLOR
+#define CYAN_COLOR     "\x1B[36m"
+#define WHITE_COLOR    "\x1B[0m"
+#define START_COLOR    CYAN_COLOR
+#define STOP_COLOR     WHITE_COLOR
 
 #define UART_PRINT Report
 
