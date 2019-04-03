@@ -55,7 +55,7 @@ extern const char *lora_hopping[];
 
 
 extern s_lora_stat lora_stat;
-extern s_at_cmd at_cmd[];
+extern const s_at_cmd at_cmd[];
 
 //#define TotalCmd  ((sizeof(at_cmd) / sizeof(s_at_cmd)) - 1)
 extern uint8_t TotalCmd;

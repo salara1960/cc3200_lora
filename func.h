@@ -114,7 +114,7 @@ extern void SetDevTime(time_t *tim);
 extern void printik(const char *tag, const char *buf, const char *color);
 
 extern void InitLora();
-extern void LoraTxBuf(char *st);
+extern void LoraTxBuf(const char *st);
 extern unsigned char LoraRxByte(unsigned char *byte);
 
 extern void init_adc(uint32_t pin);

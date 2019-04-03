@@ -18,33 +18,8 @@ static bool mode = false;//at_command
 s_lora_buf rxd;
 static volatile unsigned long TBase = TIMERA0_BASE;
 
-/*
-SemaphoreHandle_t lora_mutex;
-if (xSemaphoreTake(lora_mutex, 0) == pdTRUE) {
-	........
-	xSemaphoreGive(lora_mutex);
-}
-*/
 //******************************************************************************************
-/*
-static void LoraHandler()
-{
-uint8_t bt;
 
-//    MAP_UARTIntDisable(LORA, UART_INT_RX);
-
-    while (MAP_UARTCharsAvail(LORA)) {
-    	bt  = MAP_UARTCharGet(LORA);
-    	if ((bt >= 0x0a) && (bt <= 0x7f)) {
-    		rxd.buf[rxd.wr++] = bt; if (rxd.wr == lora_buf_len) rxd.wr = 0;
-//    		if (bt == '\n') { rxd.rdy = 1; break; }
-    	}
-    }
-
-    MAP_UARTIntClear(LORA, UART_INT_RX);
-//    MAP_UARTIntEnable(LORA, UART_INT_RX);
-}
-*/
 //-----------------------------------------------------------------------------------------
 static void LoraHandler()
 {
@@ -66,9 +41,6 @@ void uart_lora_init()
     while (MAP_UARTCharsAvail(LORA)) LORAUartGetChar();
 
     memset(&rxd, 0, sizeof(s_lora_buf));
-
-//    MAP_UARTIntRegister(LORA, LoraHandler);
-//    MAP_UARTIntEnable(LORA, UART_INT_RX);
 
     // Configuring the timer
     Timer_IF_Init(PRCM_TIMERA0, TBase, TIMER_CFG_PERIODIC, TIMER_A, 0);
@@ -153,16 +125,6 @@ bool lora_check_status()
     return (bool)pctrl.status;
 }
 //-----------------------------------------------------------------------------------------
-/*
-bool get_sym(char *symbol)
-{
-	if (MAP_UARTCharsAvail(LORA)) {
-		*symbol = MAP_UARTCharGet(LORA);
-		return true;
-	} else return false;
-}
-*/
-//-----------------------------------------------------------------------------------------
 void lora_task(void *arg)
 {
 char stx[256];
@@ -206,7 +168,6 @@ int BS = BSIZE, l32 = 32;
     				pMessage(stx);
     			}
 
-    			//memset(cmds, 0, sizeof(cmds));
     			sprintf(cmds, "%s", at_cmd[allcmd].cmd);
 
     			if (!strcmp(cmds, "AT+LRSF=")) {//Spreading Factor
@@ -220,7 +181,7 @@ int BS = BSIZE, l32 = 32;
     				sprintf(cmds+strlen(cmds), "%X", lora_stat.chan);//B//set Channel Select to 10 //0..F — 0..15 channel
     			} else if (strchr(cmds, '=')) sprintf(cmds+strlen(cmds), "?");
 
-    			sprintf(cmds+strlen(cmds),"\r\n");
+    			strcat(cmds, "\r\n");
 #ifdef PRINT_AT
     			sprintf(stx,"%s%s%s", BROWN_COLOR, cmds, STOP_COLOR);
     			pMessage(stx);
@@ -230,20 +191,20 @@ int BS = BSIZE, l32 = 32;
     			memset(data, 0, BS);
     			tms = get_tmr(at_cmd[allcmd].wait);
     			while (!check_tmr(tms)) {
-    				    while (rxd.rd != rxd.wr) {
-    				    	sym = rxd.buf[rxd.rd++];
-    				    	data[len++] = sym;
-    				    	if (rxd.rd == lora_buf_len) rxd.rd = 0;
-    				    	if (sym == '\n') break;
-    				    }
-    				//if (get_sym(&sym)) data[len++] = sym;
+    				while (rxd.rd != rxd.wr) {
+    				    sym = rxd.buf[rxd.rd++];
+    				    data[len++] = sym;
+    				    if (rxd.rd == lora_buf_len) rxd.rd = 0;
+    				    if (sym == '\n') break;
+    				}
+
     				if ( (strstr(data, "\r\n")) || (len >= BS - 2) ) {
     					if (strstr(data, "ERROR:")) {
     						sprintf(stx,"%s%s%s", RED_COLOR, data, STOP_COLOR);
     						pMessage(stx);
     					} else {
 #ifdef PRINT_AT
-    						sprintf(stx,"%s", data);
+    						strcpy(stx, data);
     						pMessage(stx);
 #endif
     						if (data[0] == '+') put_at_value(allcmd, data);
@@ -257,7 +218,6 @@ int BS = BSIZE, l32 = 32;
 
     		if (!mode) {//at_command mode
     			if (lora_stat.plen) {
-    				memset(stx, 0, sizeof(stx));
     				sprintf(stx,"%s[%s] Freq=%s Mode=%s Hopping=%s Power=%s Channel=%u BandW=%s SF=%u PackLen=%u%s\r\n",
 						GREEN_COLOR, TAG_UART,
 						lora_freq[lora_stat.freq],
@@ -276,14 +236,12 @@ int BS = BSIZE, l32 = 32;
     			vTaskDelay(150);
     			len = 0;
     			memset(data, 0, BS);
-    			memset(stx,  0, sizeof(stx));
     			sprintf(stx, "%s[%s] Device %X switch from at_command to data tx/rx mode%s\r\n", MAGENTA_COLOR, TAG_UART, cli_id, STOP_COLOR);
     			pMessage(stx);
     			needs = false;
     		} else {//data transfer mode
     			if (!needs) {
     				get_tsensor(&tchip);
-    				//memset(cmds, 0, sizeof(cmds));
     				if (ts_set) {// time already set, send message without request timestamp and timezone
     					sprintf(cmds, "DevID %08X (%u): %.2fv %ddeg.C\n", cli_id, ++pknum_tx, (float)tchip.vcc/1000, (int)round(tchip.cels));
     				} else {// send message with request timestamp and timezone
@@ -291,7 +249,7 @@ int BS = BSIZE, l32 = 32;
     				}
     				wtt_start = get_tmr(0);
     				LoraTxBuf(cmds);
-    				sprintf(cmds+strlen(cmds),"\r");
+    				strcat(cmds, "\r");
     				printik(TAG_UART, cmds, MAGENTA_COLOR);
     				evt.type = 0;
     				evt.num = pknum_tx;
@@ -310,7 +268,6 @@ int BS = BSIZE, l32 = 32;
     			if ( (strchr(data, '\n')) || (len >= BS - 2) ) {
     				wtt_stop = get_tmr(0);
     				if (!strchr(data,'\n')) sprintf(data,"\n");
-    				//memset(stx, 0, sizeof(stx));
     				sprintf(stx,"Recv (%u) : %s", ++pknum_rx, data);
     				printik(TAG_UART, stx, BROWN_COLOR);
     				//---------------
@@ -323,7 +280,6 @@ int BS = BSIZE, l32 = 32;
     						if (uke) {
     							dl = (uint32_t)(uke-uks);
     							if (dl > 8) dl = 8;
-    							//memset(tmp, 0, 32);
     							sprintf(tmp,"0x%.*s", dl, uks);
     							srv_ip = sl_Htonl(strtoul(tmp, NULL, 16));
     							sprintf(stx,"Server addr : %s - %u.%u.%u.%u\n",
@@ -351,7 +307,6 @@ int BS = BSIZE, l32 = 32;
     							uke = strchr(uks,']');
     							if (uke) {
     								*uke = '\0';
-    								//setenv("TZ", uks, 1); tzset();
     								ts_set = true;
     								sprintf(stx,"Time %u+%u (%u-%u|%u) with zone %s\n",
     											(uint32_t)(stm-dur), (uint32_t)dur, (uint32_t)wtt_start,
@@ -392,7 +347,6 @@ int BS = BSIZE, l32 = 32;
 
     }
 
-    //memset(stx, 0, sizeof(stx));
     sprintf(stx, "Stop serial_task\r\n"); printik(TAG_UART, stx, CYAN_COLOR);
 
     vTaskDelete(NULL);

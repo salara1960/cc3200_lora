@@ -13,7 +13,7 @@ const char *lora_main_mode[] = {"LoRa","OOK","FSK","GFSK"};//0..3
 const char *lora_freq[] = {"434MHZ","470MHZ","868MHZ","915MHZ"};//0..3
 const char *lora_hopping[] = {"disable","enable"};//0,1
 
-s_at_cmd at_cmd[] = {
+const s_at_cmd at_cmd[] = {
     {//0
         .cmd = "AT",
         .wait = 10000,
@@ -105,7 +105,6 @@ s_at_cmd at_cmd[] = {
 };
 
 uint8_t TotalCmd = ((sizeof(at_cmd) / sizeof(s_at_cmd)) - 1);
-
 
 void put_at_value(uint8_t ind, char *uack)
 {

@@ -70,7 +70,7 @@ void InitLora()
     Message("Init UART1 (Lora) done.\r\n");
 }
 //--------------------------------------------------------------------
-void LoraTxBuf(char *st)
+void LoraTxBuf(const char *st)
 {
     if (st) {
     	int i = 0, len = strlen(st);
@@ -130,15 +130,10 @@ uint8_t cnt = 4;
     // Disable ADC channel
     MAP_ADCChannelDisable(ADC_BASE, chan);
 
-    //UART_PRINT("\n\rTotal no of 32 bit ADC data printed :4096 \n\r");
-    //UART_PRINT("\n\rADC data format:\n\r");
-    //UART_PRINT("\n\rbits[13:2] : ADC sample\n\r");
-    //UART_PRINT("\n\rbits[31:14]: Time stamp of ADC sample \n\r");
-    //
     // Print out ADC samples
     if (prn) {
     	char st[128];
-    	sprintf(st,"Chan=%u Data=%u TimeStamp=%u Vcc=%.3fv\r\n", chan, ret, tsp, (float)ret/1000.0);//(float)(( ret*1.4)/4096) );
+    	sprintf(st,"Chan=%u Data=%u TimeStamp=%u Vcc=%.3fv\r\n", chan, ret, tsp, (float)ret/1000.0);
     	Message(st);
     }
 
@@ -147,14 +142,14 @@ uint8_t cnt = 4;
 //--------------------------------------------------------------------
 inline void get_tsensor(t_sens_t *t_s)
 {
-    t_s->vcc = GetSampleADC(TheChan, false);//4095 * 0.8;//(uint32_t)(adc1_get_raw(ADC1_TEST_CHANNEL) * 0.8);
+    t_s->vcc = GetSampleADC(TheChan, false);
+
 	#ifdef TMP006
-    	//t_s->kelv = readDieTempC(TMP006_ADDR) + 273.15;
     	t_s->kelv = readObjTempC(TMP006_ADDR);
     	t_s->cels = t_s->kelv - 273.15;
     	t_s->faren = 1.8 * (t_s->kelv - 273) + 32;
 	#else
-    	t_s->faren = 78.0;//temprature_sens_read();// - 40;
+    	t_s->faren = 78.0;
     	t_s->cels = (t_s->faren - 32) * 5/9;
 	#endif
 }

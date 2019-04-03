@@ -33,8 +33,6 @@
 
 
 extern void config_TMP006(uint8_t addr, uint16_t samples);// Configures sensor, use before reading from it
-//extern int16_t readRawDieTemperature(uint8_t addr);// Read raw sensor temperature
-//extern int16_t readRawVoltage(uint8_t addr);// Read raw thermopile voltage
 extern double readObjTempC(uint8_t addr);// Calculate object temperature based on raw sensor temp and thermopile voltage
 extern double readDieTempC(uint8_t addr);// Caculate sensor temperature based on raw reading
 

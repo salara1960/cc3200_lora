@@ -61,8 +61,8 @@ char stx[128];
 		t_sens_t ts;
 		char *st = NULL;
 	#endif
-	uint8_t col = 0, row = 0;
-	char *uk=NULL;
+	uint8_t row = 0;
+	char *uk = NULL;
 
     ssd1306_contrast(0xff);
     osi_Sleep(10);
@@ -72,25 +72,24 @@ char stx[128];
 
     while (1) {
     	if (xQueueReceive(evtq, &evt, 10) == pdTRUE) {
-    		memset(stx,0,128);
     		sprintf(stx,"[%s] ", TAG_LOOP);
 #ifdef DISPLAY
     		uk = stx + strlen(stx);
 #endif
     		if (!evt.type) {
     			GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
-    			sprintf(stx+strlen(stx),"Send");
+    			strcat(stx, "Send");
 #ifdef DISPLAY
     			row = 7;
 #endif
     		} else {
     			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
-    			sprintf(stx+strlen(stx),"Recv");
+    			strcat(stx, "Recv");
 #ifdef DISPLAY
     			row = 8;
 #endif
     		}
-    		sprintf(stx+strlen(stx)," msg #%u", evt.num);
+    		sprintf(stx+strlen(stx), " msg #%u", evt.num);
 #ifdef DISPLAY
     		if (!i2c_err) {
 #ifdef TMP006
@@ -101,13 +100,11 @@ char stx[128];
     				free(st);
     			}
 #endif
-    			col = calcx(strlen(uk));
-    			ssd1306_text_xy(uk, col, row);
+    			ssd1306_text_xy(uk, ssd1306_calcx(strlen(uk)), row);
     		}
 #endif
-    		sprintf(stx+strlen(stx),"\r\n");
+    		strcat(stx, "\r\n");
     		pMessage(stx);
-    		//printik(TAG_LOOP, stx, CYAN_COLOR);
     	}
     }//while(1)
 
@@ -140,8 +137,7 @@ uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
         LOOP_FOREVER();
     }
 
-    //memset(mac_addr, 0, mac_addr_len);
-    //sl_NetCfgGet(SL_MAC_ADDRESS_GET, NULL, &mac_addr_len, mac_addr);
+
     for (i = 0; i < mac_addr_len; i++) {
     	mac_addr[i] = i + 1;
     	if (i < 5) sprintf(stk+strlen(stk),"%02X:", mac_addr[i]);
@@ -186,7 +182,6 @@ uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
         LOOP_FOREVER();
     } else {
         Message("Start loop task OK\r\n");
-        //GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
     }
     //**************************************************************
 
@@ -194,8 +189,9 @@ uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
 
     //****************    UART1 (LORA)    **************************
     osi_MsgQCreate(&evtq, "evtq", sizeof(s_evt), 5);//create a queue to handle uart event
-//    lora_mutex = xSemaphoreCreateMutex();
+
     uart_lora_init();
+
     lRetVal = osi_TaskCreate(lora_task,
                              (const signed char *)"lora_task",
                              MAX_OSI_STACK_SIZE,
@@ -215,9 +211,6 @@ uint8_t i = 0, mac_addr_len = mac_len, mac_addr[mac_len];
     osi_start();// Start the task scheduler
 
     LOOP_FOREVER();
-
-//    while (1) { vTaskDelay(100); }
-
 
 }
 

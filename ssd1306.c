@@ -8,7 +8,7 @@ const char *TAG_OLED = "OLED";
 
 uint8_t invert = OLED_CMD_DISPLAY_NORMAL;//0xA6//OLED_CMD_DISPLAY_INVERTED;//0xA7
 
-uint8_t font8x8[128][8] = {
+const uint8_t font8x8[128][8] = {
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },   // U+0000 (nul)
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },   // U+0001
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },   // U+0002
@@ -333,7 +333,7 @@ uint8_t dat[] =
 }
 */
 //-----------------------------------------------------------------------------------------
-void ssd1306_text_xy(char *stroka, uint8_t cx, uint8_t cy)
+void ssd1306_text_xy(const char *stroka, uint8_t cx, uint8_t cy)
 {
 int rt = 0;
 uint8_t i, lin = cy - 1, col = cx - 1;
@@ -371,7 +371,7 @@ uint8_t cif[] = {OLED_CONTROL_BYTE_DATA_STREAM,0,0,0,0,0,0,0,0};
 
 }
 //-----------------------------------------------------------------------------------------
-void ssd1306_text(char *stroka)
+void ssd1306_text(const char *stroka)
 {
 	if (stroka) {
 		if (!i2c_err)
@@ -381,7 +381,7 @@ void ssd1306_text(char *stroka)
 	}
 }
 //-----------------------------------------------------------------------------------------
-uint8_t calcx(int len)
+uint8_t ssd1306_calcx(int len)
 {
 uint8_t ret = 0;
 
